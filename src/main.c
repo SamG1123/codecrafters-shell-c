@@ -4,6 +4,7 @@
 
 int main(int argc, char *argv[]) {
   char command[1024];
+  char *built_in_commands[] = {"exit", "echo", "type"};
 
   while (1){
     // Flush after every printf
@@ -17,6 +18,9 @@ int main(int argc, char *argv[]) {
     }
     else if (strncmp("echo", command, 4) == 0) {
       printf("%s\n", command+5);
+    }
+    else if (strncmp("type", command, 4) == 0) {
+      printf("%s is a shell builtin\n", command+5);
     }
     else{
     printf("%s: command not found\n", command);
