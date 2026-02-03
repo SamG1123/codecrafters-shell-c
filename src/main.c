@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         printf("%s is a shell builtin\n", command+5);
       else{
         char *path_env = getenv("PATH");
-        if (path_env == NULL) {
+        if (path_env != NULL) {
           char *path_copy = strdup(path_env);
           char *dir = strtok(path_copy, ":");
           bool found = false;
