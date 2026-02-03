@@ -1,6 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+#ifdef _WIN32
+#define PATH_LIST_SEPARATOR ';'
+#else
+#define PATH_LIST_SEPARATOR ':'
+#endif
+
 
 int main(int argc, char *argv[]) {
   char command[1024];
@@ -20,14 +28,37 @@ int main(int argc, char *argv[]) {
       printf("%s\n", command+5);
     }
     else if (strncmp("type", command, 4) == 0) {
+      char *arg = command + 5;
       if (strcmp(command+5, "exit") == 0 || strcmp(command+5, "echo") == 0 || strcmp(command+5, "type") == 0)
         printf("%s is a shell builtin\n", command+5);
       else{
-        printf("%s: not found\n", command+5);
+        char *path_env = getenv("PATH");
+        if (path_env == NULL) {
+          char *path_copy = strdup(path_env);
+          char *dir = strtok(path_copy, ":");
+          bool found = false;
+          while (dir != NULL && !found)
+          {
+            char full_path[1024];
+          snprintf(full_path, sizeof(full_path), "%s/%s", dir, arg);
+            if (access(full_path, X_OK) == 0) {
+              printf("%s is %s\n", arg, full_path);
+              found = true;
+            }
+            dir = strtok(NULL, ":");
+          }
+          free(path_copy);
+          if (!found){
+            printf("%s: not found\n", command+5);
+          }
+        }
+        else{
+          printf("%s: not found\n", command+5);
+        }
       }
     }
-    else{
-    printf("%s: command not found\n", command);
+    else {
+      printf("%s: command not found\n", command);
     }
   }
 
