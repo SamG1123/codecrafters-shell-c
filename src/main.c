@@ -53,6 +53,9 @@ int main(int argc, char *argv[]) {
       handle_cd(arg_count > 1 ? tokens[1] : "~", home_env);
     } else if (find_file(tokens[0], path_env)) {
       execute_command(command);
+    } else if (strcmp(tokens[0], "cat") == 0) {
+      if (arg_count < 2) {
+        handle_cat(tokens[1]);
     } else {
       printf("%s: command not found\n", tokens[0]);
     }

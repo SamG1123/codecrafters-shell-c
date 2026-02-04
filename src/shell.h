@@ -13,6 +13,6 @@
 
 #define MAX_COMMAND_LEN 1024
 #define MAX_PATH_LEN 1024
-#define NUM_BUILTINS 5
+#define NUM_BUILTINS 6
 
 #endif // SHELL_H
