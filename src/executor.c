@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #include "executor.h"
 #include "shell.h"
 
@@ -34,8 +35,34 @@ int find_file(char *command, char *path_env) {
   return found;
 }
 
-void execute_command(char *command) {
-  system(command);
+void execute_command(char **tokens, int token_count) {
+  if (tokens == NULL || token_count == 0) {
+    return;
+  }
+  
+  // Create NULL-terminated array for execvp
+  char **args = malloc(sizeof(char*) * (token_count + 1));
+  for (int i = 0; i < token_count; i++) {
+    args[i] = tokens[i];
+  }
+  args[token_count] = NULL;
+  
+  pid_t pid = fork();
+  if (pid == 0) {
+    // Child process
+    execvp(args[0], args);
+    // If execvp returns, it failed
+    exit(1);
+  } else if (pid > 0) {
+    // Parent process
+    int status;
+    waitpid(pid, &status, 0);
+    free(args);
+  } else {
+    // Fork failed
+    perror("fork");
+    free(args);
+  }
 }
 
 char **arg_processor(char *arg, int *argc){
