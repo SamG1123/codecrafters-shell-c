@@ -90,6 +90,11 @@ int main(int argc, char *argv[]) {
       }
     }
 
+    else if (strncmp("pwd", command, 3) == 0) {
+      char cwd[1024];
+      printf("%s\n", getcwd(cwd, sizeof(cwd)));
+    }
+
     else if (find_file(token, path_env)){
       system(command);
     }
