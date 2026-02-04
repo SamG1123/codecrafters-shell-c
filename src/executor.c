@@ -121,20 +121,22 @@ char **arg_processor(char *arg, int *argc){
                 if (c == '\"') {
                     state = STATE_NORMAL;
                 } else if (c == '\\') {
-                    // Look ahead to next character - if it's a quote, skip both
                     prev_state = state;
                     state = STATE_IN_ESCAPE;
+                } else if (c == ' ' || c == '\t') {
+                    
+                    continue;
                 } else {
                     current_arg[arg_pos++] = c;
                 }
                 break;
 
             case STATE_IN_ESCAPE:
-                // Skip the backslash, but only add char if it's not a quote or space
+                
                 if (c != '\'' && c != '\"' && c != ' ' && c != '\t') {
                     current_arg[arg_pos++] = c;
                 }
-                // If it's a quote or space, we skip it entirely (removing \' or \")
+                
                 state = prev_state;
                 break;
         }
