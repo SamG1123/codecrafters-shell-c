@@ -132,11 +132,11 @@ char **arg_processor(char *arg, int *argc){
                 break;
 
             case STATE_IN_ESCAPE:
-                
-                if (c != '\'' && c != '\"' && c != ' ' && c != '\t') {
+                if (c == '\'' || c == '\"') {
+                    current_arg[arg_pos++] = '\\';
+                } else if (c != ' ' && c != '\t') {
                     current_arg[arg_pos++] = c;
                 }
-                
                 state = prev_state;
                 break;
         }
