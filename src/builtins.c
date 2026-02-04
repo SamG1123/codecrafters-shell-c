@@ -6,7 +6,7 @@
 #include "builtins.h"
 #include "shell.h"
 
-const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd"};
+const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "cat"};
 
 int is_builtin(const char *command) {
   for (int i = 0; i < NUM_BUILTINS; i++) {
@@ -17,12 +17,22 @@ int is_builtin(const char *command) {
   return 0;
 }
 
-void handle_echo(const char *command) {
-  printf("%s\n", command + 5);
+void handle_echo(char **tokens, int token_count) {
+  for (int i = 1; i < token_count; i++) {
+    if (i > 1) {
+      printf(" ");
+    }
+    printf("%s", tokens[i]);
+  }
+  printf("\n");
 }
 
-void handle_type(const char *command, const char *path_env) {
-  char *arg = (char *)(command + 5);
+void handle_type(char **tokens, int token_count, const char *path_env) {
+  if (token_count < 2) {
+    printf("type: missing argument\n");
+    return;
+  }
+  char *arg = tokens[1];
   
   if (is_builtin(arg)) {
     printf("%s is a shell builtin\n", arg);
@@ -67,4 +77,25 @@ void handle_cd(const char *path, const char *HOME) {
     if (chdir(target_path) != 0) {
         printf("cd: %s: No such file or directory\n", target_path);
     }
+}
+
+void handle_cat(char **tokens, int token_count) {
+  if (token_count < 2) {
+    printf("cat: missing argument\n");
+    return;
+  }
+  
+  for (int i = 1; i < token_count; i++) {
+    FILE *file = fopen(tokens[i], "r");
+    if (file == NULL) {
+      printf("cat: %s: No such file or directory\n", tokens[i]);
+      continue;
+    }
+    
+    char buffer[1024];
+    while (fgets(buffer, sizeof(buffer), file)) {
+      printf("%s", buffer);
+    }
+    fclose(file);
+  }
 }

@@ -34,28 +34,33 @@ int main(int argc, char *argv[]) {
     }
 
     strcpy(input, command);
-    char *token = strtok(input, " ");
+    int arg_count = 0;
+    char **tokens = arg_processor(input, &arg_count);
 
-    if (token == NULL) {
+    if (tokens == NULL || arg_count == 0) {
       continue;
     }
 
-    if (strcmp(token, "exit") == 0) {
+    if (strcmp(tokens[0], "exit") == 0) {
       break;
-    } else if (strcmp(token, "echo") == 0) {
-      handle_echo(command);
-    } else if (strcmp(token, "type") == 0) {
-      handle_type(command, path_env);
-    } else if (strcmp(token, "pwd") == 0) {
+    } else if (strcmp(tokens[0], "echo") == 0) {
+      handle_echo(tokens, arg_count);
+    } else if (strcmp(tokens[0], "type") == 0) {
+      handle_type(tokens, arg_count, path_env);
+    } else if (strcmp(tokens[0], "pwd") == 0) {
       handle_pwd();
-    } else if (find_file(token, path_env)) {
+    } else if (strcmp(tokens[0], "cd") == 0) {
+      handle_cd(arg_count > 1 ? tokens[1] : "~", home_env);
+    } else if (find_file(tokens[0], path_env)) {
       execute_command(command);
-    } else if (strcmp(token, "cd") == 0) {
-      handle_cd(command + 3, home_env);
+    } else {
+      printf("%s: command not found\n", tokens[0]);
     }
-     else {
-      printf("%s: command not found\n", token);
+    
+    for (int i = 0; i < arg_count; i++) {
+      free(tokens[i]);
     }
+    free(tokens);
   }
 
   return 0;

@@ -5,6 +5,13 @@
 #include "executor.h"
 #include "shell.h"
 
+typedef enum {
+    STATE_NORMAL,
+    STATE_IN_SINGLE_QUOTE,
+    STATE_IN_DOUBLE_QUOTE,
+    STATE_IN_ESCAPE
+} ArgState;
+
 int find_file(char *command, char *path_env) {
   if (command == NULL || path_env == NULL) {
     return 0;
@@ -29,4 +36,71 @@ int find_file(char *command, char *path_env) {
 
 void execute_command(char *command) {
   system(command);
+}
+
+char **arg_processor(char *arg, int *argc){
+    ArgState state = STATE_NORMAL;
+    ArgState prev_state = STATE_NORMAL;
+    char **args = malloc(sizeof(char*) * MAX_COMMAND_LEN);
+    char current_arg[MAX_COMMAND_LEN] = {0};
+    int arg_pos = 0;
+    *argc = 0;
+
+    for (int i = 0; arg[i]; i++) {
+        char c = arg[i];
+
+        switch (state) {
+            case STATE_NORMAL:
+                if (c == ' ' || c == '\t') {
+                    if (arg_pos > 0) {
+                        current_arg[arg_pos] = '\0';
+                        args[*argc] = strdup(current_arg);
+                        (*argc)++;
+                        arg_pos = 0;
+                        memset(current_arg, 0, sizeof(current_arg));
+                    }
+                } else if (c == '\'') {
+                    state = STATE_IN_SINGLE_QUOTE;
+                } else if (c == '\"') {
+                    state = STATE_IN_DOUBLE_QUOTE;
+                } else if (c == '\\') {
+                    prev_state = state;
+                    state = STATE_IN_ESCAPE;
+                } else {
+                    current_arg[arg_pos++] = c;
+                }
+                break;
+
+            case STATE_IN_SINGLE_QUOTE:
+                if (c == '\'') {
+                    state = STATE_NORMAL;
+                } else {
+                    current_arg[arg_pos++] = c;
+                }
+                break;
+
+            case STATE_IN_DOUBLE_QUOTE:
+                if (c == '\"') {
+                    state = STATE_NORMAL;
+                } else if (c == '\\') {
+                    prev_state = state;
+                    state = STATE_IN_ESCAPE;
+                } else {
+                    current_arg[arg_pos++] = c;
+                }
+                break;
+
+            case STATE_IN_ESCAPE:
+                current_arg[arg_pos++] = c;
+                state = prev_state;
+                break;
+        }
+    }
+    if (arg_pos > 0) {
+        current_arg[arg_pos] = '\0';
+        args[*argc] = strdup(current_arg);
+        (*argc)++;
+    }
+    
+    return args;
 }
