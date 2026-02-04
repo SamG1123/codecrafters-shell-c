@@ -6,7 +6,7 @@
 #include "builtins.h"
 #include "shell.h"
 
-const char *builtin_commands[] = {"exit", "echo", "type", "pwd"};
+const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd"};
 
 int is_builtin(const char *command) {
   for (int i = 0; i < NUM_BUILTINS; i++) {
@@ -56,4 +56,10 @@ void handle_type(const char *command, const char *path_env) {
 void handle_pwd(void) {
   char cwd[MAX_PATH_LEN];
   printf("%s\n", getcwd(cwd, sizeof(cwd)));
+}
+
+void handle_cd(const char *path) {
+  if (chdir(path) != 0) {
+    printf("cd: %s: No such file or directory\n", path);
+  }
 }

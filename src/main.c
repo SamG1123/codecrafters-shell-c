@@ -43,7 +43,10 @@ int main(int argc, char *argv[]) {
       handle_pwd();
     } else if (find_file(token, path_env)) {
       execute_command(command);
-    } else {
+    } else if (strcmp(token, "cd") == 0) {
+      handle_cd(command + 3);
+    }
+     else {
       printf("%s: command not found\n", token);
     }
   }
