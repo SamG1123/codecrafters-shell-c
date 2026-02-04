@@ -9,6 +9,8 @@ int main(int argc, char *argv[]) {
   char command[MAX_COMMAND_LEN];
   char input[MAX_COMMAND_LEN];
   char *path_env = getenv("PATH");
+  const char *home_env;
+  home_env = getenv("HOME");
 
   // Flush after every printf
   setbuf(stdout, NULL);
@@ -44,7 +46,7 @@ int main(int argc, char *argv[]) {
     } else if (find_file(token, path_env)) {
       execute_command(command);
     } else if (strcmp(token, "cd") == 0) {
-      handle_cd(command + 3);
+      handle_cd(command + 3, home_env);
     }
      else {
       printf("%s: command not found\n", token);

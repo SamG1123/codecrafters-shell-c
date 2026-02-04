@@ -58,8 +58,13 @@ void handle_pwd(void) {
   printf("%s\n", getcwd(cwd, sizeof(cwd)));
 }
 
-void handle_cd(const char *path) {
-  if (chdir(path) != 0) {
-    printf("cd: %s: No such file or directory\n", path);
-  }
+void handle_cd(const char *path, const char *HOME) {
+    const char *target_path = path;
+
+    if (path == NULL || strlen(path) == 0 || strcmp(path, "~") == 0) {
+        target_path = HOME;
+    }
+    if (chdir(target_path) != 0) {
+        printf("cd: %s: No such file or directory\n", target_path);
+    }
 }
