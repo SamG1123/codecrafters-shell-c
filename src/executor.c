@@ -1,8 +1,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
+#ifdef _WIN32
+  #include <windows.h>
+  #include <io.h>
+  #include <process.h>
+  #define access _access
+  #define X_OK 0
+  typedef int pid_t;
+#else
+  #include <unistd.h>
+  #include <sys/types.h>
+  #include <sys/wait.h>
+#endif
 #include "executor.h"
 #include "shell.h"
 
@@ -24,7 +34,7 @@ int find_file(char *command, char *path_env) {
   
   while (dir != NULL && !found) {
     char full_path[MAX_PATH_LEN];
-    snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
+    snprintf(full_path, sizeof(full_path), "%s%c%s", dir, PATH_SEPARATOR, command);
     if (access(full_path, X_OK) == 0) {
       found = 1;
     }
@@ -40,29 +50,30 @@ void execute_command(char **tokens, int token_count) {
     return;
   }
   
-  // Create NULL-terminated array for execvp
   char **args = malloc(sizeof(char*) * (token_count + 1));
   for (int i = 0; i < token_count; i++) {
     args[i] = tokens[i];
   }
   args[token_count] = NULL;
   
+#ifdef _WIN32
+  int result = _spawnvp(_P_WAIT, args[0], (const char* const*)args);
+  free(args);
+#else
   pid_t pid = fork();
   if (pid == 0) {
-    // Child process
+
     execvp(args[0], args);
-    // If execvp returns, it failed
     exit(1);
   } else if (pid > 0) {
-    // Parent process
     int status;
     waitpid(pid, &status, 0);
     free(args);
   } else {
-    // Fork failed
     perror("fork");
     free(args);
   }
+#endif
 }
 
 char **arg_processor(char *arg, int *argc){

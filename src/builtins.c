@@ -44,7 +44,7 @@ void handle_type(char **tokens, int token_count, const char *path_env) {
       
       while (dir != NULL && !found) {
         char full_path[MAX_PATH_LEN];
-        snprintf(full_path, sizeof(full_path), "%s/%s", dir, arg);
+        snprintf(full_path, sizeof(full_path), "%s%c%s", dir, PATH_SEPARATOR, arg);
         
         if (access(full_path, X_OK) == 0) {
           printf("%s is %s\n", arg, full_path);
