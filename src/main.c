@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
           while (dir != NULL && !found)
           {
             char full_path[1024];
+            
           snprintf(full_path, sizeof(full_path), "%s/%s", dir, arg);
             if (access(full_path, X_OK) == 0) {
               printf("%s is %s\n", arg, full_path);
@@ -56,6 +57,7 @@ int main(int argc, char *argv[]) {
         else{
           printf("%s: not found\n", command+5);
         }
+        
       }
     }
     else {
@@ -66,6 +68,7 @@ int main(int argc, char *argv[]) {
           while (dir != NULL && !found)
           {
             char full_path[1024];
+            snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
             if (access(full_path, X_OK) == 0) {
               system(full_path);
               found = true;
