@@ -110,6 +110,7 @@ char **arg_processor(char *arg, int *argc){
                 break;
 
             case STATE_IN_SINGLE_QUOTE:
+                // Inside single quotes, everything is literal (no escaping)
                 if (c == '\'') {
                     state = STATE_NORMAL;
                 } else {
@@ -118,25 +119,20 @@ char **arg_processor(char *arg, int *argc){
                 break;
 
             case STATE_IN_DOUBLE_QUOTE:
+                // Inside double quotes, preserve spaces and single quotes
                 if (c == '\"') {
                     state = STATE_NORMAL;
                 } else if (c == '\\') {
                     prev_state = state;
                     state = STATE_IN_ESCAPE;
-                } else if (c == ' ' || c == '\t') {
-                    
-                    continue;
                 } else {
                     current_arg[arg_pos++] = c;
                 }
                 break;
 
             case STATE_IN_ESCAPE:
-                if (c == '\'' || c == '\"') {
-                    current_arg[arg_pos++] = '\\';
-                } else if (c != ' ' && c != '\t') {
-                    current_arg[arg_pos++] = c;
-                }
+                // Inside escape, add the escaped character literally
+                current_arg[arg_pos++] = c;
                 state = prev_state;
                 break;
         }
