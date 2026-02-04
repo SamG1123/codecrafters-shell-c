@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #ifdef _WIN32
 #define PATH_LIST_SEPARATOR ';'
@@ -15,6 +16,7 @@ int main(int argc, char *argv[]) {
   char *built_in_commands[] = {"exit", "echo", "type"};
 
   while (1){
+    char *path_env = getenv("PATH");
     // Flush after every printf
     setbuf(stdout, NULL);
     printf("$ ");
@@ -32,7 +34,6 @@ int main(int argc, char *argv[]) {
       if (strcmp(command+5, "exit") == 0 || strcmp(command+5, "echo") == 0 || strcmp(command+5, "type") == 0)
         printf("%s is a shell builtin\n", command+5);
       else{
-        char *path_env = getenv("PATH");
         if (path_env != NULL) {
           char *path_copy = strdup(path_env);
           char *dir = strtok(path_copy, ":");
@@ -58,9 +59,25 @@ int main(int argc, char *argv[]) {
       }
     }
     else {
+      if (path_env != NULL) {
+          char *path_copy = strdup(path_env);
+          char *dir = strtok(path_copy, ":");
+          bool found = false;
+          while (dir != NULL && !found)
+          {
+            char full_path[1024];
+            if (access(full_path, X_OK) == 0) {
+              system(full_path);
+              found = true;
+            }
+            dir = strtok(NULL, ":");
+          }
+          free(path_copy);
+      
       printf("%s: command not found\n", command);
     }
   }
+}
 
   return 0;
 }
