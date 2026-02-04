@@ -6,7 +6,7 @@
 #include "builtins.h"
 #include "shell.h"
 
-const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "cat"};
+const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd"};
 
 int is_builtin(const char *command) {
   for (int i = 0; i < NUM_BUILTINS; i++) {
@@ -77,25 +77,4 @@ void handle_cd(const char *path, const char *HOME) {
     if (chdir(target_path) != 0) {
         printf("cd: %s: No such file or directory\n", target_path);
     }
-}
-
-void handle_cat(char **tokens, int token_count) {
-  if (token_count < 2) {
-    printf("cat: missing argument\n");
-    return;
-  }
-  
-  for (int i = 1; i < token_count; i++) {
-    FILE *file = fopen(tokens[i], "r");
-    if (file == NULL) {
-      printf("cat: %s: No such file or directory\n", tokens[i]);
-      continue;
-    }
-    
-    char buffer[1024];
-    while (fgets(buffer, sizeof(buffer), file)) {
-      printf("%s", buffer);
-    }
-    fclose(file);
-  }
 }
