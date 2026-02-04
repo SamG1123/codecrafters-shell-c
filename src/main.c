@@ -10,7 +10,12 @@ int main(int argc, char *argv[]) {
   char input[MAX_COMMAND_LEN];
   char *path_env = getenv("PATH");
   const char *home_env;
+  
+  #ifdef _WIN32
+  home_env = getenv("USERPROFILE");
+  #else
   home_env = getenv("HOME");
+  #endif
 
   // Flush after every printf
   setbuf(stdout, NULL);
