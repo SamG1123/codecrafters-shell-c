@@ -37,7 +37,7 @@ int find_file(char *command, char *path_env) {
 
 int main(int argc, char *argv[]) {
   
-  char *built_in_commands[] = {"exit", "echo", "type"};
+  char *built_in_commands[] = {"exit", "echo", "type", "pwd"};
 
   while (1){
     char command[1024];
