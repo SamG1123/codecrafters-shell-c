@@ -6,22 +6,51 @@
 
 #ifdef _WIN32
 #define PATH_LIST_SEPARATOR ';'
+#define PATH_LIST_SEPARATOR_STR ";"
 #else
 #define PATH_LIST_SEPARATOR ':'
+#define PATH_LIST_SEPARATOR_STR ":"
 #endif
 
 
+int find_file(char *command, char *path_env) {
+  if (command == NULL || path_env == NULL) {
+    return 0;
+  }
+  
+  char *path_copy = strdup(path_env);
+  char *dir = strtok(path_copy, PATH_LIST_SEPARATOR_STR);
+  int found = 0;
+  
+  while (dir != NULL && !found) {
+    char full_path[1024];
+    snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
+    if (access(full_path, X_OK) == 0) {
+      found = 1;
+    }
+    dir = strtok(NULL, PATH_LIST_SEPARATOR_STR);
+  }
+  
+  free(path_copy);
+  return found;
+}
+
 int main(int argc, char *argv[]) {
-  char command[1024];
+  
   char *built_in_commands[] = {"exit", "echo", "type"};
 
   while (1){
+    char command[1024];
+    char input[1024];
     char *path_env = getenv("PATH");
     // Flush after every printf
     setbuf(stdout, NULL);
     printf("$ ");
     fgets(command, sizeof(command), stdin);
     command[strcspn(command, "\n")] = 0;
+
+    strcpy(input, command);
+    char *token = strtok(input, " ");
 
     if (strcmp(command, "exit") == 0) {
       break;
@@ -60,27 +89,16 @@ int main(int argc, char *argv[]) {
         
       }
     }
-    else {
-      if (path_env != NULL) {
-          char *path_copy = strdup(path_env);
-          char *dir = strtok(path_copy, ":");
-          bool found = false;
-          while (dir != NULL && !found)
-          {
-            char full_path[1024];
-            snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
-            if (access(full_path, X_OK) == 0) {
-              system(full_path);
-              found = true;
-            }
-            dir = strtok(NULL, ":");
-          }
-          free(path_copy);
-      
-      printf("%s: command not found\n", command);
+
+    else if (find_file(token, path_env)){
+      system(command);
     }
+
+    else {
+      printf("%s: command not found\n", command);
+      }
   }
-}
+
 
   return 0;
 }
