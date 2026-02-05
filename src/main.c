@@ -231,128 +231,133 @@ int main(int argc, char *argv[]) {
 
     
 
-    char **cmd1 = NULL;
-    char **cmd2 = NULL;
+    char ***commands = malloc((pipe_count + 1) * sizeof(char **));
+
+    for (int i = 0; i <= pipe_count; i++) {
+      int start = i == 0 ? 0 : pipe_index[i - 1] + 1;
+      int end = i == pipe_count ? arg_count : pipe_index[i];
+      int count = end - start;
+      commands[i] = malloc((count + 1) * sizeof(char *));
+      for (int j = 0; j < count; j++) {
+        commands[i][j] = tokens[start + j];
+      }
+      commands[i][count] = NULL;
+    }
     
     if (pipe_count > 0) {
-      cmd1 = malloc((pipe_index[0] + 1) * sizeof(char *));
-      for(int i = 0; i < pipe_index[0]; i++) {
-        cmd1[i] = tokens[i];
-      }
-      cmd1[pipe_index[0]] = NULL;
-
-      int cmd2_count = arg_count - pipe_index[0] - 1;
-      cmd2 = malloc((cmd2_count + 1) * sizeof(char *));
-      for(int i = 0; i < cmd2_count; i++) {
-        cmd2[i] = tokens[pipe_index[0] + 1 + i];
-      }
-      cmd2[cmd2_count] = NULL;
-    }
-
-    if (pipe_count > 0) {
-      int pipefd[2];
-      if (pipe(pipefd) == -1) {
-        perror("pipe");
-        free(cmd1);
-        free(cmd2);
-        for (int i = 0; i < arg_count; i++) {
-          free(tokens[i]);
-        }
-        free(tokens);
-        continue;
-      }
+      int pipefd[MAX_PIPES][2];
+      pid_t children[MAX_COMMANDS];
       
-      pid_t p1 = fork();
-
-      if (p1 < 0) {
-        perror("fork");
-        close(pipefd[0]);
-        close(pipefd[1]);
-        free(cmd1);
-        free(cmd2);
-        for (int i = 0; i < arg_count; i++) {
-          free(tokens[i]);
-        }
-        free(tokens);
-        continue;
-      }
-
-      if (p1 == 0) {
-        close(pipefd[0]);
-        dup2(pipefd[1], 1);
-        close(pipefd[1]);
+      char ***commands = malloc((pipe_count + 1) * sizeof(char**));
+      for (int j = 0; j <= pipe_count; j++) {
+        int cmd_start = (j == 0) ? 0 : pipe_index[j-1] + 1;
+        int cmd_end = (j == pipe_count) ? arg_count : pipe_index[j];
+        int cmd_token_count = cmd_end - cmd_start;
         
-        if (is_builtin_cmd(cmd1[0])) {
-          if (strcmp(cmd1[0], "echo") == 0) {
-            handle_echo(cmd1, pipe_index);
-          } else if (strcmp(cmd1[0], "type") == 0) {
-            handle_type(cmd1, pipe_index, path_env);
-          } else if (strcmp(cmd1[0], "pwd") == 0) {
-            handle_pwd();
-          } else if (strcmp(cmd1[0], "cd") == 0) {
-            handle_cd(pipe_index[0] > 1 ? cmd1[1] : "~", home_env);
+        commands[j] = malloc((cmd_token_count + 1) * sizeof(char*));
+        for (int i = 0; i < cmd_token_count; i++) {
+          commands[j][i] = tokens[cmd_start + i];
+        }
+        commands[j][cmd_token_count] = NULL;
+      }
+      
+      for (int j = 0; j < pipe_count; j++) {
+        if (pipe(pipefd[j]) == -1) {
+          perror("pipe");
+          for (int x = 0; x <= pipe_count; x++) {
+            free(commands[x]);
           }
-          exit(0);
-        } else if (find_file(cmd1[0], path_env)) {
-          execute_command(cmd1, pipe_index[0]);
-          exit(0);
-        } else {
-          printf("%s: command not found\n", cmd1[0]);
-          exit(1);
+          free(commands);
+          for (int i = 0; i < arg_count; i++) {
+            free(tokens[i]);
+          }
+          free(tokens);
+          continue;
         }
       }
       
-      pid_t p2 = fork();
-      
-      if (p2 < 0) {
-        perror("fork");
-        close(pipefd[0]);
-        close(pipefd[1]);
-        free(cmd1);
-        free(cmd2);
-        for (int i = 0; i < arg_count; i++) {
-          free(tokens[i]);
-        }
-        free(tokens);
-        continue;
-      }
-      
-      if (p2 == 0) {
-        close(pipefd[1]);
-        dup2(pipefd[0], 0);
-        close(pipefd[0]);
+      for (int j = 0; j <= pipe_count; j++) {
+        pid_t child = fork();
         
-        int cmd2_count = arg_count - pipe_index[0] - 1;
-        if (is_builtin_cmd(cmd2[0])) {
-          if (strcmp(cmd2[0], "echo") == 0) {
-            handle_echo(cmd2, cmd2_count);
-          } else if (strcmp(cmd2[0], "type") == 0) {
-            handle_type(cmd2, cmd2_count, path_env);
-          } else if (strcmp(cmd2[0], "pwd") == 0) {
-            handle_pwd();
-          } else if (strcmp(cmd2[0], "cd") == 0) {
-            handle_cd(cmd2_count > 1 ? cmd2[1] : "~", home_env);
+        if (child < 0) {
+          perror("fork");
+          for (int x = 0; x < pipe_count; x++) {
+            close(pipefd[x][0]);
+            close(pipefd[x][1]);
           }
-          exit(0);
-        } else if (find_file(cmd2[0], path_env)) {
-          execute_command(cmd2, cmd2_count);
-          exit(0);
-        } else {
-          execvp(cmd2[0], cmd2);
-          perror(cmd2[0]);
-          exit(1);
+          for (int x = 0; x <= pipe_count; x++) {
+            free(commands[x]);
+          }
+          free(commands);
+          for (int i = 0; i < arg_count; i++) {
+            free(tokens[i]);
+          }
+          free(tokens);
+          continue;
         }
+        
+        if (child == 0) {
+          if (j > 0) {
+            close(pipefd[j-1][1]);
+            dup2(pipefd[j-1][0], 0);
+            close(pipefd[j-1][0]);
+          }
+          
+          if (j < pipe_count) {
+            close(pipefd[j][0]);
+            dup2(pipefd[j][1], 1);
+            close(pipefd[j][1]);
+          }
+          
+          for (int x = 0; x < pipe_count; x++) {
+            if (x != j-1 && x != j) {
+              close(pipefd[x][0]);
+              close(pipefd[x][1]);
+            }
+          }
+          
+          int cmd_start = (j == 0) ? 0 : pipe_index[j-1] + 1;
+          int cmd_end = (j == pipe_count) ? arg_count : pipe_index[j];
+          int cmd_token_count = cmd_end - cmd_start;
+          
+          if (is_builtin_cmd(commands[j][0])) {
+            if (strcmp(commands[j][0], "echo") == 0) {
+              handle_echo(commands[j], cmd_token_count);
+            } else if (strcmp(commands[j][0], "type") == 0) {
+              handle_type(commands[j], cmd_token_count, path_env);
+            } else if (strcmp(commands[j][0], "pwd") == 0) {
+              handle_pwd();
+            } else if (strcmp(commands[j][0], "cd") == 0) {
+              handle_cd(cmd_token_count > 1 ? commands[j][1] : "~", home_env);
+            }
+            exit(0);
+          } else if (find_file(commands[j][0], path_env)) {
+            execute_command(commands[j], cmd_token_count);
+            exit(0);
+          } else {
+            execvp(commands[j][0], commands[j]);
+            perror(commands[j][0]);
+            exit(1);
+          }
+        }
+        
+        children[j] = child;
       }
       
-      close(pipefd[0]);
-      close(pipefd[1]);
+      for (int x = 0; x < pipe_count; x++) {
+        close(pipefd[x][0]);
+        close(pipefd[x][1]);
+      }
       
-      int status1, status2;
-      waitpid(p1, &status1, 0);
-      waitpid(p2, &status2, 0);
+      int statuses[MAX_COMMANDS];
+      for (int j = 0; j <= pipe_count; j++) {
+        waitpid(children[j], &statuses[j], 0);
+      }
       
-      free(cmd1);
-      free(cmd2);
+      for (int j = 0; j <= pipe_count; j++) {
+        free(commands[j]);
+      }
+      free(commands);
       
       for (int i = 0; i < arg_count; i++) {
         free(tokens[i]);
