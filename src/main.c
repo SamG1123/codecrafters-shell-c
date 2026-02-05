@@ -390,14 +390,24 @@ int main(int argc, char *argv[]) {
       break;
     } else if (strcmp(tokens[0], "echo") == 0) {
       handle_echo(tokens, redirect_index == -1 ? arg_count : redirect_index);
+      add_history(tokens[0]);
     } else if (strcmp(tokens[0], "type") == 0) {
       handle_type(tokens, redirect_index == -1 ? arg_count : redirect_index, path_env);
+      add_history(tokens[0]);
     } else if (strcmp(tokens[0], "pwd") == 0) {
       handle_pwd();
+      add_history(tokens[0]);
     } else if (strcmp(tokens[0], "cd") == 0) {
       handle_cd(arg_count > 1 ? tokens[1] : "~", home_env);
+      add_history(tokens[0]);
+    } else if (strcmp(tokens[0], "history") == 0) {
+      add_history(tokens[0]);
+      for (int h = 0; h < MAX_HISTORY && h < completion_count; h++) {
+        printf("%d %s\n", h + 1, completion_list[h]);
+      }
     } else if (find_file(tokens[0], path_env)) {
       execute_command(tokens, arg_count);
+      add_history(tokens[0]);
     } else {
       printf("%s: command not found\n", tokens[0]);
     }
