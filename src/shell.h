@@ -13,7 +13,7 @@
 
 #define MAX_COMMAND_LEN 1024
 #define MAX_PATH_LEN 1024
-#define NUM_BUILTINS 5
+#define NUM_BUILTINS 6
 #define MAX_PIPES 10
 #define MAX_COMMANDS (MAX_PIPES + 1)
 extern int STDOUT_REDIRECT;
