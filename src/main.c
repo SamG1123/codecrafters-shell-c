@@ -15,6 +15,44 @@
 int STDOUT_REDIRECT = 0;
 int STDERR_REDIRECT = 0;
 
+// Helper to redirect a file descriptor
+int redirect_fd(int fd, const char *filename) {
+  int saved = -1;
+  FILE *file = fopen(filename, "w");
+  if (file == NULL) {
+    return -1;
+  }
+#ifdef _WIN32
+  saved = _dup(fd);
+  _dup2(_fileno(file), fd);
+#else
+  saved = dup(fd);
+  dup2(fileno(file), fd);
+#endif
+  fclose(file);
+  return saved;
+}
+
+// Helper to restore a file descriptor
+void restore_fd(int fd, int saved) {
+  if (saved == -1) return;
+#ifdef _WIN32
+  fflush(fd == 1 ? stdout : stderr);
+  _dup2(saved, fd);
+  _close(saved);
+#else
+  fflush(fd == 1 ? stdout : stderr);
+  dup2(saved, fd);
+  close(saved);
+#endif
+}
+
+// Check if command is builtin
+int is_builtin_cmd(const char *cmd) {
+  return strcmp(cmd, "echo") == 0 || strcmp(cmd, "type") == 0 ||
+         strcmp(cmd, "pwd") == 0 || strcmp(cmd, "cd") == 0;
+}
+
 int main(int argc, char *argv[]) {
   char command[MAX_COMMAND_LEN];
   char input[MAX_COMMAND_LEN];
@@ -57,61 +95,31 @@ int main(int argc, char *argv[]) {
     char *error_file = NULL;
     int redirect_index = -1;
     
+    // Parse redirection operators
     for (int i = 0; i < arg_count; i++) {
       if (strcmp(tokens[i], ">") == 0 || strcmp(tokens[i], "1>") == 0) {
         STDOUT_REDIRECT = 1;
         redirect_index = i;
-        if (i < arg_count - 1) {
-          output_file = tokens[i + 1];
-        }
+        output_file = (i < arg_count - 1) ? tokens[i + 1] : NULL;
         break;
       }
       else if (strcmp(tokens[i], "2>") == 0) {
         STDERR_REDIRECT = 1;
         redirect_index = i;
-        if (i < arg_count - 1) {
-          error_file = tokens[i + 1];
-        }
+        error_file = (i < arg_count - 1) ? tokens[i + 1] : NULL;
         break;
       }
     }
 
-    int saved_stdout = -1;
-    int saved_stderr = -1;
-    FILE *stdout_redirect_file = NULL;
-    FILE *stderr_redirect_file = NULL;
-    int is_builtin = (strcmp(tokens[0], "echo") == 0 || strcmp(tokens[0], "type") == 0 || strcmp(tokens[0], "pwd") == 0 || strcmp(tokens[0], "cd") == 0);
-    
-    if (is_builtin && STDOUT_REDIRECT && output_file != NULL) {
-#ifdef _WIN32
-      saved_stdout = _dup(1);
-      stdout_redirect_file = fopen(output_file, "w");
-      if (stdout_redirect_file != NULL) {
-        _dup2(_fileno(stdout_redirect_file), 1);
+    // Setup redirections for builtin commands
+    int saved_stdout = -1, saved_stderr = -1;
+    if (is_builtin_cmd(tokens[0])) {
+      if (STDOUT_REDIRECT && output_file) {
+        saved_stdout = redirect_fd(1, output_file);
       }
-#else
-      saved_stdout = dup(1);
-      stdout_redirect_file = fopen(output_file, "w");
-      if (stdout_redirect_file != NULL) {
-        dup2(fileno(stdout_redirect_file), 1);
+      if (STDERR_REDIRECT && error_file) {
+        saved_stderr = redirect_fd(2, error_file);
       }
-#endif
-    }
-    
-    if (is_builtin && STDERR_REDIRECT && error_file != NULL) {
-#ifdef _WIN32
-      saved_stderr = _dup(2);
-      stderr_redirect_file = fopen(error_file, "w");
-      if (stderr_redirect_file != NULL) {
-        _dup2(_fileno(stderr_redirect_file), 2);
-      }
-#else
-      saved_stderr = dup(2);
-      stderr_redirect_file = fopen(error_file, "w");
-      if (stderr_redirect_file != NULL) {
-        dup2(fileno(stderr_redirect_file), 2);
-      }
-#endif
     }
 
     if (strcmp(tokens[0], "exit") == 0) {
@@ -127,38 +135,11 @@ int main(int argc, char *argv[]) {
     } else if (find_file(tokens[0], path_env)) {
       execute_command(tokens, arg_count);
     } else {
-      execute_command(tokens, arg_count);
+      printf("%s: command not found\n", tokens[0]);
     }
     
-    if (saved_stdout != -1) {
-#ifdef _WIN32
-      fflush(stdout);
-      _dup2(saved_stdout, 1);
-      _close(saved_stdout);
-#else
-      fflush(stdout);
-      dup2(saved_stdout, 1);
-      close(saved_stdout);
-#endif
-      if (stdout_redirect_file != NULL) {
-        fclose(stdout_redirect_file);
-      }
-    }
-
-    if (saved_stderr != -1) {
-#ifdef _WIN32
-      fflush(stderr);
-      _dup2(saved_stderr, 2);
-      _close(saved_stderr);
-#else
-      fflush(stderr);
-      dup2(saved_stderr, 2);
-      close(saved_stderr);
-#endif
-      if (stderr_redirect_file != NULL) {
-        fclose(stderr_redirect_file);
-      }
-    }
+    restore_fd(1, saved_stdout);
+    restore_fd(2, saved_stderr);
     
     for (int i = 0; i < arg_count; i++) {
       free(tokens[i]);
