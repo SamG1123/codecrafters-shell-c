@@ -273,3 +273,7 @@ char **arg_processor(char *arg, int *argc){
     return args;
 }
 
+char command_pipeline(char **commands, int command_count) {
+    
+}
+

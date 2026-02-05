@@ -9,10 +9,12 @@
 #include "executor.h"
 
 #ifdef _WIN32
+  #include <windows.h>
   #include <io.h>
-  #include <fcntl.h>
+  #include <process.h>
 #else
   #include <unistd.h>
+  #include <sys/wait.h>
 #endif
 
 int STDOUT_REDIRECT = 0;
@@ -21,7 +23,6 @@ char **completion_list = NULL;
 int completion_count = 0;
 char *current_path_env = NULL;
 
-// Helper to redirect a file descriptor
 int redirect_fd(int fd, const char *filename, const char *file_mode) {
   int saved = -1;
   FILE *file = fopen(filename, file_mode);
@@ -39,7 +40,6 @@ int redirect_fd(int fd, const char *filename, const char *file_mode) {
   return saved;
 }
 
-// Helper to restore a file descriptor
 void restore_fd(int fd, int saved) {
   if (saved == -1) return;
 #ifdef _WIN32
@@ -53,7 +53,6 @@ void restore_fd(int fd, int saved) {
 #endif
 }
 
-// Check if command is builtin
 int is_builtin_cmd(const char *cmd) {
   return strcmp(cmd, "echo") == 0 || strcmp(cmd, "type") == 0 ||
          strcmp(cmd, "pwd") == 0 || strcmp(cmd, "cd") == 0;
@@ -157,7 +156,7 @@ int main(int argc, char *argv[]) {
   char command[MAX_COMMAND_LEN];
   char input[MAX_COMMAND_LEN];
   char *path_env = getenv("PATH");
-  current_path_env = path_env;  // Store for autocomplete functions
+  current_path_env = path_env;
   const char *home_env;
   
   #ifdef _WIN32
@@ -166,11 +165,11 @@ int main(int argc, char *argv[]) {
   home_env = getenv("HOME");
   #endif
 
-  // Flush after every printf
   setbuf(stdout, NULL);
 
   while (1) {
     rl_attempted_completion_function = autocomplete_setup;
+    int pipe_index = -1;
     char *command = readline("$ ");
     
     if (command == NULL) {
@@ -199,7 +198,6 @@ int main(int argc, char *argv[]) {
     int redirect_index = -1;
     char *file_mode = "w";
     
-    // Parse redirection operators
     for (int i = 0; i < arg_count; i++) {
       if (strcmp(tokens[i], ">") == 0 || strcmp(tokens[i], "1>") == 0) {
         STDOUT_REDIRECT = 1;
@@ -225,10 +223,144 @@ int main(int argc, char *argv[]) {
         error_file = (i < arg_count - 1) ? tokens[i + 1] : NULL;
         file_mode = "a";
         break;
+      } else if (strcmp(tokens[i], "|") == 0) {
+        pipe_index = i;
+        break;
       }
     }
 
-    // Setup redirections for builtin commands
+    
+
+    char **cmd1 = NULL;
+    char **cmd2 = NULL;
+    
+    if (pipe_index != -1) {
+      cmd1 = malloc((pipe_index + 1) * sizeof(char *));
+      for(int i = 0; i < pipe_index; i++) {
+        cmd1[i] = tokens[i];
+      }
+      cmd1[pipe_index] = NULL;
+
+      int cmd2_count = arg_count - pipe_index - 1;
+      cmd2 = malloc((cmd2_count + 1) * sizeof(char *));
+      for(int i = 0; i < cmd2_count; i++) {
+        cmd2[i] = tokens[pipe_index + 1 + i];
+      }
+      cmd2[cmd2_count] = NULL;
+    }
+
+    if (pipe_index != -1) {
+      int pipefd[2];
+      if (pipe(pipefd) == -1) {
+        perror("pipe");
+        free(cmd1);
+        free(cmd2);
+        for (int i = 0; i < arg_count; i++) {
+          free(tokens[i]);
+        }
+        free(tokens);
+        continue;
+      }
+      
+      pid_t p1 = fork();
+
+      if (p1 < 0) {
+        perror("fork");
+        close(pipefd[0]);
+        close(pipefd[1]);
+        free(cmd1);
+        free(cmd2);
+        for (int i = 0; i < arg_count; i++) {
+          free(tokens[i]);
+        }
+        free(tokens);
+        continue;
+      }
+
+      if (p1 == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], 1);
+        close(pipefd[1]);
+        
+        if (is_builtin_cmd(cmd1[0])) {
+          if (strcmp(cmd1[0], "echo") == 0) {
+            handle_echo(cmd1, pipe_index);
+          } else if (strcmp(cmd1[0], "type") == 0) {
+            handle_type(cmd1, pipe_index, path_env);
+          } else if (strcmp(cmd1[0], "pwd") == 0) {
+            handle_pwd();
+          } else if (strcmp(cmd1[0], "cd") == 0) {
+            handle_cd(pipe_index > 1 ? cmd1[1] : "~", home_env);
+          }
+          exit(0);
+        } else if (find_file(cmd1[0], path_env)) {
+          execute_command(cmd1, pipe_index);
+          exit(0);
+        } else {
+          printf("%s: command not found\n", cmd1[0]);
+          exit(1);
+        }
+      }
+      
+      pid_t p2 = fork();
+      
+      if (p2 < 0) {
+        perror("fork");
+        close(pipefd[0]);
+        close(pipefd[1]);
+        free(cmd1);
+        free(cmd2);
+        for (int i = 0; i < arg_count; i++) {
+          free(tokens[i]);
+        }
+        free(tokens);
+        continue;
+      }
+      
+      if (p2 == 0) {
+        close(pipefd[1]);
+        dup2(pipefd[0], 0);
+        close(pipefd[0]);
+        
+        int cmd2_count = arg_count - pipe_index - 1;
+        if (is_builtin_cmd(cmd2[0])) {
+          if (strcmp(cmd2[0], "echo") == 0) {
+            handle_echo(cmd2, cmd2_count);
+          } else if (strcmp(cmd2[0], "type") == 0) {
+            handle_type(cmd2, cmd2_count, path_env);
+          } else if (strcmp(cmd2[0], "pwd") == 0) {
+            handle_pwd();
+          } else if (strcmp(cmd2[0], "cd") == 0) {
+            handle_cd(cmd2_count > 1 ? cmd2[1] : "~", home_env);
+          }
+          exit(0);
+        } else if (find_file(cmd2[0], path_env)) {
+          execute_command(cmd2, cmd2_count);
+          exit(0);
+        } else {
+          execvp(cmd2[0], cmd2);
+          perror(cmd2[0]);
+          exit(1);
+        }
+      }
+      
+      close(pipefd[0]);
+      close(pipefd[1]);
+      
+      int status1, status2;
+      waitpid(p1, &status1, 0);
+      waitpid(p2, &status2, 0);
+      
+      free(cmd1);
+      free(cmd2);
+      
+      for (int i = 0; i < arg_count; i++) {
+        free(tokens[i]);
+      }
+      free(tokens);
+      continue;
+    }
+
     int saved_stdout = -1, saved_stderr = -1;
     if (is_builtin_cmd(tokens[0])) {
       if (STDOUT_REDIRECT && output_file) {
@@ -264,7 +396,6 @@ int main(int argc, char *argv[]) {
     free(tokens);
   }
 
-  // Cleanup completion list
   for (int i = 0; i < completion_count; i++) {
     free(completion_list[i]);
   }
