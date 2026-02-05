@@ -45,6 +45,7 @@ int find_file(char *command, char *path_env) {
 }
 
 void execute_command(char **tokens, int token_count) {
+  char file_mode;
   if (tokens == NULL || token_count == 0) {
     return;
   }
@@ -60,6 +61,14 @@ void execute_command(char **tokens, int token_count) {
         if (i < token_count - 1) {
           output_file = tokens[i + 1];
         }
+        file_mode = 'w';
+        break;
+      } else if (strcmp(tokens[i], ">>") == 0 || strcmp(tokens[i], "1>>") == 0) {
+        redirect_index = i;
+        if (i < token_count - 1) {
+          output_file = tokens[i + 1];
+        }
+        file_mode = 'a';
         break;
       }
     }
@@ -151,7 +160,7 @@ void execute_command(char **tokens, int token_count) {
   if (pid == 0) {
     // Redirect stdout in child
     if (STDOUT_REDIRECT && output_file != NULL) {
-      FILE *file = fopen(output_file, "w");
+      FILE *file = fopen(output_file, file_mode);
       if (file == NULL) {
         perror("fopen");
         exit(1);

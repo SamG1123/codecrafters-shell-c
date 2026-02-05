@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
     
     // Parse redirection operators
     for (int i = 0; i < arg_count; i++) {
-      if (strcmp(tokens[i], ">") == 0 || strcmp(tokens[i], "1>") == 0) {
+      if (strcmp(tokens[i], ">") == 0 || strcmp(tokens[i], "1>") == 0 || strcmp(tokens[i], ">>") == 0 || strcmp(tokens[i], "1>>") == 0) {
         STDOUT_REDIRECT = 1;
         redirect_index = i;
         output_file = (i < arg_count - 1) ? tokens[i + 1] : NULL;
