@@ -116,7 +116,12 @@ int main(int argc, char *argv[]) {
         redirect_index = i;
         error_file = (i < arg_count - 1) ? tokens[i + 1] : NULL;
         break;
-      }
+      } else if (strcmp(tokens[i], "2>>") == 0) {
+        STDERR_REDIRECT = 1;
+        redirect_index = i;
+        error_file = (i < arg_count - 1) ? tokens[i + 1] : NULL;
+        file_mode = "a";
+        break;
     }
 
     // Setup redirections for builtin commands
