@@ -178,7 +178,7 @@ void execute_command(char **tokens, int token_count) {
     
     // Redirect stderr in child
     if (STDERR_REDIRECT && error_file != NULL) {
-      FILE *file = fopen(error_file, "w");
+      FILE *file = fopen(error_file, file_mode);
       if (file == NULL) {
         perror("fopen");
         exit(1);
