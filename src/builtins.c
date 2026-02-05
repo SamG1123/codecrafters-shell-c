@@ -6,7 +6,7 @@
 #include "builtins.h"
 #include "shell.h"
 
-const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd"};
+const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "history"};
 
 int is_builtin(const char *command) {
   for (int i = 0; i < NUM_BUILTINS; i++) {
