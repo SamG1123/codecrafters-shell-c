@@ -169,7 +169,8 @@ int main(int argc, char *argv[]) {
 
   while (1) {
     rl_attempted_completion_function = autocomplete_setup;
-    int pipe_index = -1;
+    int pipe_index[MAX_PIPES];
+    int pipe_count = 0;
     char *command = readline("$ ");
     
     if (command == NULL) {
@@ -224,8 +225,7 @@ int main(int argc, char *argv[]) {
         file_mode = "a";
         break;
       } else if (strcmp(tokens[i], "|") == 0) {
-        pipe_index = i;
-        break;
+        pipe_index[pipe_count++] = i;
       }
     }
 
@@ -234,22 +234,22 @@ int main(int argc, char *argv[]) {
     char **cmd1 = NULL;
     char **cmd2 = NULL;
     
-    if (pipe_index != -1) {
-      cmd1 = malloc((pipe_index + 1) * sizeof(char *));
-      for(int i = 0; i < pipe_index; i++) {
+    if (pipe_count > 0) {
+      cmd1 = malloc((pipe_index[0] + 1) * sizeof(char *));
+      for(int i = 0; i < pipe_index[0]; i++) {
         cmd1[i] = tokens[i];
       }
-      cmd1[pipe_index] = NULL;
+      cmd1[pipe_index[0]] = NULL;
 
-      int cmd2_count = arg_count - pipe_index - 1;
+      int cmd2_count = arg_count - pipe_index[0] - 1;
       cmd2 = malloc((cmd2_count + 1) * sizeof(char *));
       for(int i = 0; i < cmd2_count; i++) {
-        cmd2[i] = tokens[pipe_index + 1 + i];
+        cmd2[i] = tokens[pipe_index[0] + 1 + i];
       }
       cmd2[cmd2_count] = NULL;
     }
 
-    if (pipe_index != -1) {
+    if (pipe_count > 0) {
       int pipefd[2];
       if (pipe(pipefd) == -1) {
         perror("pipe");
@@ -290,11 +290,11 @@ int main(int argc, char *argv[]) {
           } else if (strcmp(cmd1[0], "pwd") == 0) {
             handle_pwd();
           } else if (strcmp(cmd1[0], "cd") == 0) {
-            handle_cd(pipe_index > 1 ? cmd1[1] : "~", home_env);
+            handle_cd(pipe_index[0] > 1 ? cmd1[1] : "~", home_env);
           }
           exit(0);
         } else if (find_file(cmd1[0], path_env)) {
-          execute_command(cmd1, pipe_index);
+          execute_command(cmd1, pipe_index[0]);
           exit(0);
         } else {
           printf("%s: command not found\n", cmd1[0]);
@@ -322,7 +322,7 @@ int main(int argc, char *argv[]) {
         dup2(pipefd[0], 0);
         close(pipefd[0]);
         
-        int cmd2_count = arg_count - pipe_index - 1;
+        int cmd2_count = arg_count - pipe_index[0] - 1;
         if (is_builtin_cmd(cmd2[0])) {
           if (strcmp(cmd2[0], "echo") == 0) {
             handle_echo(cmd2, cmd2_count);
