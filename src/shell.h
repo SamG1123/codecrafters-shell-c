@@ -15,4 +15,6 @@
 #define MAX_PATH_LEN 1024
 #define NUM_BUILTINS 5
 
+extern int STDOUT_REDIRECT;
+
 #endif // SHELL_H

@@ -6,7 +6,6 @@
   #include <io.h>
   #include <process.h>
   #define access _access
-  #define X_OK 0
   typedef int pid_t;
 #else
   #include <unistd.h>
@@ -50,19 +49,67 @@ void execute_command(char **tokens, int token_count) {
     return;
   }
   
-  char **args = malloc(sizeof(char*) * (token_count + 1));
-  for (int i = 0; i < token_count; i++) {
+  int redirect_index = -1;
+  char *output_file = NULL;
+  
+  if (STDOUT_REDIRECT) {
+    for (int i = 0; i < token_count; i++) {
+      if (strcmp(tokens[i], ">") == 0) {
+        redirect_index = i;
+        if (i < token_count - 1) {
+          output_file = tokens[i + 1];
+        }
+        break;
+      }
+    }
+    
+    if (redirect_index == -1 || output_file == NULL) {
+      printf("Syntax error: no file specified for redirection\n");
+      return;
+    }
+  }
+  
+  int arg_count = redirect_index == -1 ? token_count : redirect_index;
+  char **args = malloc(sizeof(char*) * (arg_count + 1));
+  for (int i = 0; i < arg_count; i++) {
     args[i] = tokens[i];
   }
-  args[token_count] = NULL;
+  args[arg_count] = NULL;
   
 #ifdef _WIN32
+  int saved_stdout = -1;
+  if (output_file != NULL) {
+    saved_stdout = _dup(1); 
+    FILE *file = fopen(output_file, "w");
+    if (file == NULL) {
+      perror("fopen");
+      free(args);
+      return;
+    }
+    _dup2(_fileno(file), 1); 
+    fclose(file);
+  }
+  
   int result = _spawnvp(_P_WAIT, args[0], (const char* const*)args);
+  
+  if (saved_stdout != -1) {
+    _dup2(saved_stdout, 1);  
+    _close(saved_stdout);
+  }
   free(args);
 #else
+  
   pid_t pid = fork();
   if (pid == 0) {
-
+    if (output_file != NULL) {
+      FILE *file = fopen(output_file, "w");
+      if (file == NULL) {
+        perror("fopen");
+        exit(1);
+      }
+      dup2(fileno(file), 1);  
+      fclose(file);
+    }
     execvp(args[0], args);
     exit(1);
   } else if (pid > 0) {
@@ -147,3 +194,4 @@ char **arg_processor(char *arg, int *argc){
     
     return args;
 }
+
