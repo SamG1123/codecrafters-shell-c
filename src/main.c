@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     int redirect_index = -1;
     
     for (int i = 0; i < arg_count; i++) {
-      if (strcmp(tokens[i], ">") == 0) {
+      if (strcmp(tokens[i], ">") == 0 || strcmp(tokens[i], "1>") == 0) {
         STDOUT_REDIRECT = 1;
         redirect_index = i;
         if (i < arg_count - 1) {
