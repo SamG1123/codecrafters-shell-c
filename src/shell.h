@@ -16,5 +16,6 @@
 #define NUM_BUILTINS 5
 
 extern int STDOUT_REDIRECT;
+extern int STDERR_REDIRECT;
 
 #endif // SHELL_H

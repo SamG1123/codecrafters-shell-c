@@ -51,6 +51,7 @@ void execute_command(char **tokens, int token_count) {
   
   int redirect_index = -1;
   char *output_file = NULL;
+  char *error_file = NULL;
   
   if (STDOUT_REDIRECT) {
     for (int i = 0; i < token_count; i++) {
@@ -69,6 +70,23 @@ void execute_command(char **tokens, int token_count) {
     }
   }
   
+  if (STDERR_REDIRECT) {
+    for (int i = 0; i < token_count; i++) {
+      if (strcmp(tokens[i], "2>") == 0) {
+        redirect_index = i;
+        if (i < token_count - 1) {
+          error_file = tokens[i + 1];
+        }
+        break;
+      }
+    }
+    
+    if (redirect_index == -1 || error_file == NULL) {
+      printf("Syntax error: no file specified for error redirection\n");
+      return;
+    }
+  }
+  
   int arg_count = redirect_index == -1 ? token_count : redirect_index;
   char **args = malloc(sizeof(char*) * (arg_count + 1));
   for (int i = 0; i < arg_count; i++) {
@@ -78,38 +96,81 @@ void execute_command(char **tokens, int token_count) {
   
 #ifdef _WIN32
   int saved_stdout = -1;
-  if (output_file != NULL) {
-    saved_stdout = _dup(1); 
-    FILE *file = fopen(output_file, "w");
-    if (file == NULL) {
+  int saved_stderr = -1;
+  FILE *stdout_file = NULL;
+  FILE *stderr_file = NULL;
+  
+  // Redirect stdout
+  if (STDOUT_REDIRECT && output_file != NULL) {
+    saved_stdout = _dup(1);
+    stdout_file = fopen(output_file, "w");
+    if (stdout_file == NULL) {
       perror("fopen");
       free(args);
       return;
     }
-    _dup2(_fileno(file), 1); 
-    fclose(file);
+    _dup2(_fileno(stdout_file), 1);
+  }
+  
+  // Redirect stderr
+  if (STDERR_REDIRECT && error_file != NULL) {
+    saved_stderr = _dup(2);
+    stderr_file = fopen(error_file, "w");
+    if (stderr_file == NULL) {
+      perror("fopen");
+      free(args);
+      return;
+    }
+    _dup2(_fileno(stderr_file), 2);
   }
   
   int result = _spawnvp(_P_WAIT, args[0], (const char* const*)args);
   
+  // Restore stdout
   if (saved_stdout != -1) {
-    _dup2(saved_stdout, 1);  
+    _dup2(saved_stdout, 1);
     _close(saved_stdout);
+    if (stdout_file != NULL) {
+      fclose(stdout_file);
+    }
   }
+  
+  // Restore stderr
+  if (saved_stderr != -1) {
+    _dup2(saved_stderr, 2);
+    _close(saved_stderr);
+    if (stderr_file != NULL) {
+      fclose(stderr_file);
+    }
+  }
+  
   free(args);
 #else
   
   pid_t pid = fork();
   if (pid == 0) {
-    if (output_file != NULL) {
+    // Redirect stdout in child
+    if (STDOUT_REDIRECT && output_file != NULL) {
       FILE *file = fopen(output_file, "w");
       if (file == NULL) {
         perror("fopen");
         exit(1);
       }
-      dup2(fileno(file), 1);  
+      dup2(fileno(file), 1);
       fclose(file);
     }
+    
+    // Redirect stderr in child
+    if (STDERR_REDIRECT && error_file != NULL) {
+      FILE *file = fopen(error_file, "w");
+      if (file == NULL) {
+        perror("fopen");
+        exit(1);
+      }
+      dup2(fileno(file), 2);
+      fclose(file);
+    }
+    
     execvp(args[0], args);
     exit(1);
   } else if (pid > 0) {
