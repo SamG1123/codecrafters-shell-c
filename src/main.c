@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <readline/history.h>
+#include <readline/readline.h>
 #include <stdlib.h>
 #include "shell.h"
 #include "builtins.h"
@@ -53,6 +55,32 @@ int is_builtin_cmd(const char *cmd) {
          strcmp(cmd, "pwd") == 0 || strcmp(cmd, "cd") == 0;
 }
 
+char *autocomplete(const char *text, int state) {
+  static int list_index, len;
+  const char *name;
+
+  if (!state) {
+    list_index = 0;
+    len = strlen(text);
+  }
+
+  while ((name = builtin_commands[list_index]) != NULL) {
+    list_index++;
+    if (strncmp(name, text, len) == 0) {
+      return strdup(name);
+    }
+  }
+
+  return NULL;
+}
+
+char **autocomplete_setup(const char *text, int start, int end) {
+  rl_attempted_completion_over = 1;
+  return rl_completion_matches(text, autocomplete);
+}
+
+
+
 int main(int argc, char *argv[]) {
   char command[MAX_COMMAND_LEN];
   char input[MAX_COMMAND_LEN];
@@ -69,11 +97,13 @@ int main(int argc, char *argv[]) {
   setbuf(stdout, NULL);
 
   while (1) {
-    printf("$ ");
+    rl_attempted_completion_function = autocomplete_setup;
+    char *command = readline("$ ");
     
-    if (fgets(command, sizeof(command), stdin) == NULL) {
+    if (command == NULL) {
       break;
     }
+    add_history(command);
     
     command[strcspn(command, "\n")] = 0;
     
