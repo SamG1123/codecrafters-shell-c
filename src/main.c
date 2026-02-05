@@ -3,6 +3,7 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include "shell.h"
 #include "builtins.h"
 #include "executor.h"
@@ -16,6 +17,9 @@
 
 int STDOUT_REDIRECT = 0;
 int STDERR_REDIRECT = 0;
+char **completion_list = NULL;
+int completion_count = 0;
+char *current_path_env = NULL;
 
 // Helper to redirect a file descriptor
 int redirect_fd(int fd, const char *filename, const char *file_mode) {
@@ -55,20 +59,88 @@ int is_builtin_cmd(const char *cmd) {
          strcmp(cmd, "pwd") == 0 || strcmp(cmd, "cd") == 0;
 }
 
-char *autocomplete(const char *text, int state) {
-  static int list_index, len;
-  const char *name;
 
-  if (!state) {
-    list_index = 0;
-    len = strlen(text);
+void add_executables_from_dir(const char *dir, const char *prefix, int prefix_len) {
+  DIR *dirp = opendir(dir);
+  if (dirp == NULL) return;
+
+  struct dirent *entry;
+  while ((entry = readdir(dirp)) != NULL) {
+    if (strncmp(entry->d_name, prefix, prefix_len) != 0) {
+      continue;
+    }
+
+
+    int found = 0;
+    for (int i = 0; i < completion_count; i++) {
+      if (strcmp(completion_list[i], entry->d_name) == 0) {
+        found = 1;
+        break;
+      }
+    }
+    if (found) continue;
+
+
+    if (completion_count % 10 == 0 && completion_count > 0) {
+      completion_list = realloc(completion_list, (completion_count + 10) * sizeof(char *));
+    }
+
+    completion_list[completion_count] = strdup(entry->d_name);
+    if (completion_list[completion_count] != NULL) {
+      completion_count++;
+    }
+  }
+  closedir(dirp);
+}
+
+
+void build_completion_list(const char *text) {
+  int text_len = strlen(text);
+
+  // Free old list
+  for (int i = 0; i < completion_count; i++) {
+    free(completion_list[i]);
+  }
+  free(completion_list);
+  completion_list = NULL;
+  completion_count = 0;
+
+  
+  completion_list = malloc(10 * sizeof(char *));
+  if (completion_list == NULL) return;
+
+  // Add matching builtins
+  for (int i = 0; i < NUM_BUILTINS; i++) {
+    if (strncmp(builtin_commands[i], text, text_len) == 0) {
+      completion_list[completion_count] = strdup(builtin_commands[i]);
+      if (completion_list[completion_count] != NULL) {
+        completion_count++;
+      }
+    }
   }
 
-  while ((name = builtin_commands[list_index]) != NULL) {
-    list_index++;
-    if (strncmp(name, text, len) == 0) {
-      return strdup(name);
+  // Add matching executables from PATH
+  if (current_path_env != NULL) {
+    char *path_copy = strdup(current_path_env);
+    if (path_copy != NULL) {
+      char *dir = strtok(path_copy, PATH_LIST_SEPARATOR_STR);
+      while (dir != NULL) {
+        add_executables_from_dir(dir, text, text_len);
+        dir = strtok(NULL, PATH_LIST_SEPARATOR_STR);
+      }
+      free(path_copy);
     }
+  }
+}
+
+char *autocomplete(const char *text, int state) {
+  if (!state) {
+    build_completion_list(text);
+    return (completion_count > 0) ? strdup(completion_list[0]) : NULL;
+  }
+
+  if (state < completion_count) {
+    return strdup(completion_list[state]);
   }
 
   return NULL;
@@ -85,6 +157,7 @@ int main(int argc, char *argv[]) {
   char command[MAX_COMMAND_LEN];
   char input[MAX_COMMAND_LEN];
   char *path_env = getenv("PATH");
+  current_path_env = path_env;  // Store for autocomplete functions
   const char *home_env;
   
   #ifdef _WIN32
@@ -190,6 +263,12 @@ int main(int argc, char *argv[]) {
     }
     free(tokens);
   }
+
+  // Cleanup completion list
+  for (int i = 0; i < completion_count; i++) {
+    free(completion_list[i]);
+  }
+  free(completion_list);
 
   return 0;
 }
