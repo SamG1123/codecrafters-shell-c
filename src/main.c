@@ -55,7 +55,8 @@ void restore_fd(int fd, int saved) {
 
 int is_builtin_cmd(const char *cmd) {
   return strcmp(cmd, "echo") == 0 || strcmp(cmd, "type") == 0 ||
-         strcmp(cmd, "pwd") == 0 || strcmp(cmd, "cd") == 0;
+         strcmp(cmd, "pwd") == 0 || strcmp(cmd, "cd") == 0 || 
+          strcmp(cmd, "history") == 0;
 }
 
 
@@ -176,13 +177,13 @@ int main(int argc, char *argv[]) {
     if (command == NULL) {
       break;
     }
-    add_history(command);
     
     command[strcspn(command, "\n")] = 0;
     
     if (strlen(command) == 0) {
       continue;
     }
+    add_history(command);
 
     strcpy(input, command);
     int arg_count = 0;
@@ -323,26 +324,18 @@ int main(int argc, char *argv[]) {
           if (is_builtin_cmd(commands[j][0])) {
             if (strcmp(commands[j][0], "echo") == 0) {
               handle_echo(commands[j], cmd_token_count);
-              add_history(commands[j][0]);
             } else if (strcmp(commands[j][0], "type") == 0) {
               handle_type(commands[j], cmd_token_count, path_env);
-              add_history(commands[j][0]);
             } else if (strcmp(commands[j][0], "pwd") == 0) {
               handle_pwd();
-              add_history(commands[j][0]);
             } else if (strcmp(commands[j][0], "cd") == 0) {
               handle_cd(cmd_token_count > 1 ? commands[j][1] : "~", home_env);
-              add_history(commands[j][0]);
             } else if (strcmp(commands[j][0], "history") == 0) {
-              add_history(commands[j][0]);
-              for (int h = 0; h < MAX_HISTORY && h < completion_count; h++) {
-                printf("%d %s\n", h + 1, completion_list[h]);
-              }
+              handle_history();
             }
             exit(0);
           } else if (find_file(commands[j][0], path_env)) {
             execute_command(commands[j], cmd_token_count);
-            add_history(commands[j][0]);
             exit(0);
           } else {
             execvp(commands[j][0], commands[j]);
@@ -390,24 +383,16 @@ int main(int argc, char *argv[]) {
       break;
     } else if (strcmp(tokens[0], "echo") == 0) {
       handle_echo(tokens, redirect_index == -1 ? arg_count : redirect_index);
-      add_history(tokens[0]);
     } else if (strcmp(tokens[0], "type") == 0) {
       handle_type(tokens, redirect_index == -1 ? arg_count : redirect_index, path_env);
-      add_history(tokens[0]);
     } else if (strcmp(tokens[0], "pwd") == 0) {
       handle_pwd();
-      add_history(tokens[0]);
     } else if (strcmp(tokens[0], "cd") == 0) {
       handle_cd(arg_count > 1 ? tokens[1] : "~", home_env);
-      add_history(tokens[0]);
     } else if (strcmp(tokens[0], "history") == 0) {
-      add_history(tokens[0]);
-      for (int h = 0; h < MAX_HISTORY && h < completion_count; h++) {
-        printf("%d %s\n", h + 1, completion_list[h]);
-      }
+      handle_history();
     } else if (find_file(tokens[0], path_env)) {
       execute_command(tokens, arg_count);
-      add_history(tokens[0]);
     } else {
       printf("%s: command not found\n", tokens[0]);
     }

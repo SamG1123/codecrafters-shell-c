@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <readline/history.h>
 #include "builtins.h"
 #include "shell.h"
 
@@ -77,4 +78,14 @@ void handle_cd(const char *path, const char *HOME) {
     if (chdir(target_path) != 0) {
         printf("cd: %s: No such file or directory\n", target_path);
     }
+}
+
+void handle_history(void) {
+  HIST_ENTRY **hist_list = history_list();
+  if (hist_list == NULL) {
+    return;
+  }
+  for (int i = 0; hist_list[i] != NULL; i++) {
+    printf("%d  %s\n", i + 1, hist_list[i]->line);
+  }
 }
