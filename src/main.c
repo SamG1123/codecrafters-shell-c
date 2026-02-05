@@ -323,16 +323,26 @@ int main(int argc, char *argv[]) {
           if (is_builtin_cmd(commands[j][0])) {
             if (strcmp(commands[j][0], "echo") == 0) {
               handle_echo(commands[j], cmd_token_count);
+              add_history(commands[j][0]);
             } else if (strcmp(commands[j][0], "type") == 0) {
               handle_type(commands[j], cmd_token_count, path_env);
+              add_history(commands[j][0]);
             } else if (strcmp(commands[j][0], "pwd") == 0) {
               handle_pwd();
+              add_history(commands[j][0]);
             } else if (strcmp(commands[j][0], "cd") == 0) {
               handle_cd(cmd_token_count > 1 ? commands[j][1] : "~", home_env);
+              add_history(commands[j][0]);
+            } else if (strcmp(commands[j][0], "history") == 0) {
+              add_history(commands[j][0]);
+              for (int h = 0; h < MAX_HISTORY && h < completion_count; h++) {
+                printf("%d %s\n", h + 1, completion_list[h]);
+              }
             }
             exit(0);
           } else if (find_file(commands[j][0], path_env)) {
             execute_command(commands[j], cmd_token_count);
+            add_history(commands[j][0]);
             exit(0);
           } else {
             execvp(commands[j][0], commands[j]);
