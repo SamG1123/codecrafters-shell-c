@@ -16,9 +16,9 @@ int STDOUT_REDIRECT = 0;
 int STDERR_REDIRECT = 0;
 
 // Helper to redirect a file descriptor
-int redirect_fd(int fd, const char *filename) {
+int redirect_fd(int fd, const char *filename, const char *file_mode) {
   int saved = -1;
-  FILE *file = fopen(filename, "w");
+  FILE *file = fopen(filename, file_mode);
   if (file == NULL) {
     return -1;
   }
@@ -94,13 +94,21 @@ int main(int argc, char *argv[]) {
     char *output_file = NULL;
     char *error_file = NULL;
     int redirect_index = -1;
+    char *file_mode = "w";
     
     // Parse redirection operators
     for (int i = 0; i < arg_count; i++) {
-      if (strcmp(tokens[i], ">") == 0 || strcmp(tokens[i], "1>") == 0 || strcmp(tokens[i], ">>") == 0 || strcmp(tokens[i], "1>>") == 0) {
+      if (strcmp(tokens[i], ">") == 0 || strcmp(tokens[i], "1>") == 0) {
         STDOUT_REDIRECT = 1;
         redirect_index = i;
         output_file = (i < arg_count - 1) ? tokens[i + 1] : NULL;
+        file_mode = "w";
+        break;
+      } else if (strcmp(tokens[i], ">>") == 0 || strcmp(tokens[i], "1>>") == 0) {
+        STDOUT_REDIRECT = 1;
+        redirect_index = i;
+        output_file = (i < arg_count - 1) ? tokens[i + 1] : NULL;
+        file_mode = "a";
         break;
       }
       else if (strcmp(tokens[i], "2>") == 0) {
@@ -115,10 +123,10 @@ int main(int argc, char *argv[]) {
     int saved_stdout = -1, saved_stderr = -1;
     if (is_builtin_cmd(tokens[0])) {
       if (STDOUT_REDIRECT && output_file) {
-        saved_stdout = redirect_fd(1, output_file);
+        saved_stdout = redirect_fd(1, output_file, file_mode);
       }
       if (STDERR_REDIRECT && error_file) {
-        saved_stderr = redirect_fd(2, error_file);
+        saved_stderr = redirect_fd(2, error_file, file_mode);
       }
     }
 

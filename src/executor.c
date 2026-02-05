@@ -63,7 +63,7 @@ void execute_command(char **tokens, int token_count) {
         }
         file_mode = "w";
         break;
-      } else if (strcmp(tokens[i], ">>") == 0 || strcmp(tokens[i], "1>>") == 0) {
+      } if (strcmp(tokens[i], ">>") == 0 || strcmp(tokens[i], "1>>") == 0) {
         redirect_index = i;
         if (i < token_count - 1) {
           output_file = tokens[i + 1];
