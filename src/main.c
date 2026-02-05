@@ -122,6 +122,7 @@ int main(int argc, char *argv[]) {
         error_file = (i < arg_count - 1) ? tokens[i + 1] : NULL;
         file_mode = "a";
         break;
+      }
     }
 
     // Setup redirections for builtin commands
