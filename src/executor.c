@@ -86,6 +86,7 @@ void execute_command(char **tokens, int token_count) {
         if (i < token_count - 1) {
           error_file = tokens[i + 1];
         }
+        file_mode = "w";
         break;
       } if (strcmp(tokens[i], "2>>") == 0) {
         redirect_index = i;
