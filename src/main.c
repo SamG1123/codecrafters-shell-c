@@ -183,7 +183,6 @@ int main(int argc, char *argv[]) {
     if (strlen(command) == 0) {
       continue;
     }
-    add_history(command);
 
     strcpy(input, command);
     int arg_count = 0;
@@ -191,6 +190,10 @@ int main(int argc, char *argv[]) {
 
     if (tokens == NULL || arg_count == 0) {
       continue;
+    }
+
+    if (strcmp(tokens[0], "history") != 0) {
+      add_history(command);
     }
 
     STDOUT_REDIRECT = 0;
