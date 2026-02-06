@@ -393,7 +393,6 @@ int main(int argc, char *argv[]) {
     }
 
     if (strcmp(tokens[0], "exit") == 0) {
-      printf("Exiting shell...\n");
       remove("history.txt");
       break;
     } else if (strcmp(tokens[0], "echo") == 0) {
