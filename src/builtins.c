@@ -98,15 +98,14 @@ void handle_history(int count) {
   }
   
 
-  int start_index = 0;
-  int end_index = 1;
+  int start_index = line_number - 1;
+  
   if (count > 0) {
     start_index = line_number - count;
-    end_index = line_number;
     if (start_index < 0) start_index = 0;
   }
 
-  for (int i = start_index; i < end_index; i++) {
+  for (int i = start_index; i < line_number; i++) {
     printf("%5d  %s\n", i + 1, temp_buffer[i]);
   }
   
