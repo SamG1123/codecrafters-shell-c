@@ -340,7 +340,7 @@ int main(int argc, char *argv[]) {
               handle_history(commands[j][1]);
             } else if (strcmp(commands[j][0], "history") == 0) {
               handle_history(commands[j][1]);
-              display_history();
+              display_history(history_count, history);
             }
             exit(0);
           } else if (find_file(commands[j][0], path_env)) {
@@ -405,7 +405,7 @@ int main(int argc, char *argv[]) {
       handle_history(tokens[0]);
     } else if (strcmp(tokens[0], "history") == 0) {
       handle_history(tokens[0]);
-      display_history();
+      display_history(history_count, history);
     } else if (find_file(tokens[0], path_env)) {
       execute_command(tokens, arg_count);
       handle_history(tokens[0]);
