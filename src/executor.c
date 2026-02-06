@@ -274,14 +274,5 @@ char **arg_processor(char *arg, int *argc){
 }
 
 
-void add_history(const char *command) {
-  static char history[MAX_HISTORY][MAX_COMMAND_LEN];
-  static int history_count = 0;
-  if (command == NULL || strlen(command) == 0) {
-    return;
-  }
-  strncpy(history[history_count % MAX_HISTORY], command, MAX_COMMAND_LEN - 1);
-  history[history_count % MAX_HISTORY][MAX_COMMAND_LEN - 1] = '\0';
-  history_count++;
-}
+
 
