@@ -7,9 +7,6 @@
 #include "builtins.h"
 #include "shell.h"
 
-extern char history[MAX_HISTORY][MAX_COMMAND_LEN];
-extern int history_count;
-
 const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "history"};
 
 int is_builtin(const char *command) {
@@ -84,11 +81,11 @@ void handle_cd(const char *path, const char *HOME) {
 }
 
 void handle_history(const char *command) {
-  if (command == NULL || strlen(command) == 0) {
+  HIST_ENTRY **hist_list = history_list();
+  if (hist_list == NULL) {
     return;
   }
-  strncpy(history[history_count % MAX_HISTORY], command, MAX_COMMAND_LEN - 1);
-  history[history_count % MAX_HISTORY][MAX_COMMAND_LEN - 1] = '\0';
-  history_count++;
+  for (int i = 0; hist_list[i] != NULL; i++) {
+    printf("%d  %s\n", i + 1, hist_list[i]->line);
+  }
 }
-
