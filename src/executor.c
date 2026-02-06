@@ -272,3 +272,10 @@ char **arg_processor(char *arg, int *argc){
     return args;
 }
 
+void display_history(int HISTORY_COUNT, char history[MAX_HISTORY][MAX_COMMAND_LEN]) {
+  for (int i = 0; i < HISTORY_COUNT; i++) {
+    if (strlen(history[i]) > 0) {
+      printf("%d %s\n", i + 1, history[i]);
+    }
+  }
+}
