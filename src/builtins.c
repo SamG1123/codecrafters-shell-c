@@ -97,6 +97,16 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
     } else {
       printf("history: cannot cd to %s\n", dir);
     }
+
+    FILE *file = fopen(current_history_file, "a");
+    if (file == NULL) {
+      return;
+    }
+
+    int line_number = 0;
+    fprintf(file, "history -r %s\n", history_file);
+    fclose(file);
+
     free(path_copy);
     return;
   }
