@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <libgen.h>
 #include <readline/history.h>
 #include "builtins.h"
 #include "shell.h"
@@ -83,12 +84,20 @@ void handle_cd(const char *path, const char *HOME) {
 
 void handle_history(int count, char *arg, char *path_env, char *history_file) {
   if (arg != NULL && strcmp(arg, "-r") == 0 && history_file != NULL) {
-    if (chdir(history_file) == 0) {
-      strncpy(current_history_file, history_file, MAX_PATH_LEN - 1);
+    
+    char *path_copy = strdup(history_file);
+    char *dir = dirname(path_copy);
+    char *filename = basename(history_file);
+    
+   
+    if (chdir(dir) == 0) {
+      
+      strncpy(current_history_file, filename, MAX_PATH_LEN - 1);
       current_history_file[MAX_PATH_LEN - 1] = '\0';
     } else {
-      printf("history: cannot cd to %s\n", history_file);
+      printf("history: cannot cd to %s\n", dir);
     }
+    free(path_copy);
     return;
   }
   
