@@ -80,7 +80,7 @@ void handle_cd(const char *path, const char *HOME) {
     }
 }
 
-void handle_history(void) {
+void handle_history(int count) {
   FILE *history_file = fopen("history.txt", "r");
   if (history_file == NULL) {
     return;
@@ -90,7 +90,9 @@ void handle_history(void) {
   int line_number = 1;
   
   while (fgets(line, sizeof(line), history_file) != NULL) {
-    // Remove newline if present
+    if (count > 0 && line_number > count) {
+      break;
+    }
     line[strcspn(line, "\n")] = 0;
     printf("%5d  %s\n", line_number++, line);
   }
