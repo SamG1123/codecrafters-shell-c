@@ -96,7 +96,7 @@ void handle_history(int count) {
     buffer[line_number - 1] = strdup(line);
     line_number++;
   }
-  int len_buffer = len(buffer);
+  int len_buffer = sizeof(buffer);
   for (int i = len_buffer - count; i < len_buffer; i++) {
     if (i >= 0) {
       printf("%d %s\n", i + 1, buffer[i]);
