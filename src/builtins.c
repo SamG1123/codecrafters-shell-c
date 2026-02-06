@@ -101,7 +101,7 @@ void handle_history(int count) {
   int start_index = (count > 0 && count < line_number) ? (line_number - count) : 0;
   
   // Display entries
-  for (int i = start_index; i < line_number; i++) {
+  for (int i = line_number - count; i < line_number; i++) {
     printf("%5d  %s\n", i + 1, temp_buffer[i]);
   }
   
