@@ -81,41 +81,31 @@ void handle_cd(const char *path, const char *HOME) {
 }
 
 void handle_history(int count, char *arg, char *path_env, char *history_file) {
-  if (arg != NULL && strcmp(arg, "-r") == 0) {
-    FILE *file = fopen(history_file, "r");
-    if (file == NULL) {
-      return;
-    }
+  FILE *file = fopen(history_file, "r");
+  if (file == NULL) {
+    return;
   }
-  else {
-    FILE *history_file = fopen("history.txt", "r");
-    if (history_file == NULL) {
-      return;
-    }
-  }
-
+  
   char line[1024];
   char *temp_buffer[MAX_HISTORY];
   int line_number = 0;
   
-
-  while (fgets(line, sizeof(line), history_file) != NULL && line_number < MAX_HISTORY) {
+  // Read all lines from history file
+  while (fgets(line, sizeof(line), file) != NULL && line_number < MAX_HISTORY) {
     line[strcspn(line, "\n")] = 0;
     temp_buffer[line_number] = strdup(line);
     line_number++;
   }
   
-
+  // Determine starting index for display
   int start_index = 0;
-  int end_index = line_number;
-  
   if (count > 0) {
     start_index = line_number - count;
-    end_index = line_number;
     if (start_index < 0) start_index = 0;
   }
 
-  for (int i = start_index; i < end_index; i++) {
+  // Display entries
+  for (int i = start_index; i < line_number; i++) {
     printf("%5d  %s\n", i + 1, temp_buffer[i]);
   }
   
@@ -124,5 +114,5 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
     free(temp_buffer[i]);
   }
   
-  fclose(history_file);
+  fclose(file);
 }
