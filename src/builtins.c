@@ -84,7 +84,39 @@ void handle_cd(const char *path, const char *HOME) {
 void handle_history(int count, char *arg, char *path_env, char *history_file) {
   // Handle history -r <path> to set the history file location
   if (arg != NULL && strcmp(arg, "-r") == 0 && history_file != NULL) {
-    // Simply store the full path as the current history file
+    // Read existing contents from the new history file
+    char *content_buffer[MAX_HISTORY];
+    int existing_lines = 0;
+    
+    FILE *file = fopen(history_file, "r");
+    if (file != NULL) {
+      char line[1024];
+      while (fgets(line, sizeof(line), file) != NULL && existing_lines < MAX_HISTORY) {
+        line[strcspn(line, "\n")] = 0;
+        content_buffer[existing_lines] = strdup(line);
+        existing_lines++;
+      }
+      fclose(file);
+    }
+    
+    // Reopen file in write mode and write history -r command first
+    file = fopen(history_file, "w");
+    if (file != NULL) {
+      fprintf(file, "history -r %s\n", history_file);
+      
+      // Write back all existing content
+      for (int i = 0; i < existing_lines; i++) {
+        fprintf(file, "%s\n", content_buffer[i]);
+      }
+      fclose(file);
+    }
+    
+    // Cleanup buffer
+    for (int i = 0; i < existing_lines; i++) {
+      free(content_buffer[i]);
+    }
+    
+    // Update the current history file path
     strncpy(current_history_file, history_file, MAX_PATH_LEN - 1);
     current_history_file[MAX_PATH_LEN - 1] = '\0';
     return;
