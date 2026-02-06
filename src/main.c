@@ -349,7 +349,7 @@ int main(int argc, char *argv[]) {
               if (cmd_token_count > 1) {
                 count = atoi(commands[j][1]);
               }
-              handle_history(count);
+              handle_history(count, cmd_token_count > 1 ? commands[j][1] : NULL, path_env, "history.txt");
             }
             exit(0);
           } else if (find_file(commands[j][0], path_env)) {
@@ -413,7 +413,7 @@ int main(int argc, char *argv[]) {
       if (arg_count > 1) {
         count = atoi(tokens[1]);
       }
-      handle_history(count);
+      handle_history(count, arg_count > 1 ? tokens[1] : NULL, path_env, "history.txt");
     } else if (find_file(tokens[0], path_env)) {
       execute_command(tokens, arg_count);
     } else {

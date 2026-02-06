@@ -80,12 +80,20 @@ void handle_cd(const char *path, const char *HOME) {
     }
 }
 
-void handle_history(int count) {
-  FILE *history_file = fopen("history.txt", "r");
-  if (history_file == NULL) {
-    return;
+void handle_history(int count, char *arg, char *path_env, char *history_file) {
+  if (arg != NULL && strcmp(arg, "-r") == 0) {
+    FILE *file = fopen(history_file, "r");
+    if (file == NULL) {
+      return;
+    }
   }
-  
+  else {
+    FILE *history_file = fopen("history.txt", "r");
+    if (history_file == NULL) {
+      return;
+    }
+  }
+
   char line[1024];
   char *temp_buffer[MAX_HISTORY];
   int line_number = 0;
