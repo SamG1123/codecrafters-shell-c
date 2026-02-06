@@ -9,8 +9,6 @@
 
 const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "history"};
 
-const char *buffer[MAX_HISTORY];
-
 int is_builtin(const char *command) {
   for (int i = 0; i < NUM_BUILTINS; i++) {
     if (strcmp(command, builtin_commands[i]) == 0) {
@@ -89,18 +87,27 @@ void handle_history(int count) {
   }
   
   char line[1024];
-  int line_number = 1;
+  char *temp_buffer[MAX_HISTORY];
+  int line_number = 0;
   
-  while (fgets(line, sizeof(line), history_file) != NULL) {
+  // Read all lines from history file
+  while (fgets(line, sizeof(line), history_file) != NULL && line_number < MAX_HISTORY) {
     line[strcspn(line, "\n")] = 0;
-    buffer[line_number - 1] = strdup(line);
+    temp_buffer[line_number] = strdup(line);
     line_number++;
   }
-  int len_buffer = sizeof(buffer);
-  for (int i = len_buffer - count; i < len_buffer; i++) {
-    if (i >= 0) {
-      printf("%d %s\n", i + 1, buffer[i]);
-    }
+  
+  // Determine starting index for display
+  int start_index = (count > 0 && count < line_number) ? (line_number - count) : 0;
+  
+  // Display entries
+  for (int i = start_index; i < line_number; i++) {
+    printf("%5d  %s\n", i + 1, temp_buffer[i]);
+  }
+  
+  // Cleanup
+  for (int i = 0; i < line_number; i++) {
+    free(temp_buffer[i]);
   }
   
   fclose(history_file);
