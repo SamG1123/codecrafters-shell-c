@@ -195,12 +195,8 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    // Save command to history file
-    FILE *history_file = fopen("history.txt", "a");
-    if (history_file != NULL) {
-      fprintf(history_file, "%s\n", command);
-      fclose(history_file);
-    }
+    // Save command to history
+    save_command_to_history(command);
 
     STDOUT_REDIRECT = 0;
     STDERR_REDIRECT = 0;
@@ -340,7 +336,7 @@ int main(int argc, char *argv[]) {
             } else if (strcmp(commands[j][0], "cd") == 0) {
               handle_cd(cmd_token_count > 1 ? commands[j][1] : "~", home_env);
             } else if (strcmp(commands[j][0], "history") == 0) {
-              display_history(history_count, history);
+              handle_history();
             }
             exit(0);
           } else if (find_file(commands[j][0], path_env)) {
@@ -399,7 +395,7 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(tokens[0], "cd") == 0) {
       handle_cd(arg_count > 1 ? tokens[1] : "~", home_env);
     } else if (strcmp(tokens[0], "history") == 0) {
-      display_history(history_count, history);
+      handle_history();
     } else if (find_file(tokens[0], path_env)) {
       execute_command(tokens, arg_count);
     } else {

@@ -5,8 +5,8 @@
 
 int find_file(char *command, char *path_env);
 void execute_command(char **tokens, int token_count);
-char **arg_processor(char *arg, int *argc);\
+char **arg_processor(char *arg, int *argc);
 void file_redirect(char *filename, char **tokens, int token_count);
-void display_history(int HISTORY_COUNT, char history[MAX_HISTORY][MAX_COMMAND_LEN]);
+void save_command_to_history(const char *command);
 
 #endif // EXECUTOR_H
