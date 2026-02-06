@@ -8,6 +8,7 @@
 #include "shell.h"
 
 const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "history"};
+char current_history_file[MAX_PATH_LEN] = "history.txt";
 
 int is_builtin(const char *command) {
   for (int i = 0; i < NUM_BUILTINS; i++) {
@@ -81,7 +82,17 @@ void handle_cd(const char *path, const char *HOME) {
 }
 
 void handle_history(int count, char *arg, char *path_env, char *history_file) {
-  FILE *file = fopen(history_file, "r");
+  if (arg != NULL && strcmp(arg, "-r") == 0 && history_file != NULL) {
+    if (chdir(history_file) == 0) {
+      strncpy(current_history_file, history_file, MAX_PATH_LEN - 1);
+      current_history_file[MAX_PATH_LEN - 1] = '\0';
+    } else {
+      printf("history: cannot cd to %s\n", history_file);
+    }
+    return;
+  }
+  
+  FILE *file = fopen(current_history_file, "r");
   if (file == NULL) {
     return;
   }
@@ -90,21 +101,18 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
   char *temp_buffer[MAX_HISTORY];
   int line_number = 0;
   
-  // Read all lines from history file
   while (fgets(line, sizeof(line), file) != NULL && line_number < MAX_HISTORY) {
     line[strcspn(line, "\n")] = 0;
     temp_buffer[line_number] = strdup(line);
     line_number++;
   }
   
-  // Determine starting index for display
   int start_index = 0;
   if (count > 0) {
     start_index = line_number - count;
     if (start_index < 0) start_index = 0;
   }
 
-  // Display entries
   for (int i = start_index; i < line_number; i++) {
     printf("%5d  %s\n", i + 1, temp_buffer[i]);
   }

@@ -345,11 +345,18 @@ int main(int argc, char *argv[]) {
             } else if (strcmp(commands[j][0], "cd") == 0) {
               handle_cd(cmd_token_count > 1 ? commands[j][1] : "~", home_env);
             } else if (strcmp(commands[j][0], "history") == 0) {
-              int count = 0;
-              if (cmd_token_count > 1) {
-                count = atoi(commands[j][1]);
+              if (cmd_token_count > 1 && strcmp(commands[j][1], "-r") == 0) {
+                // history -r "location"
+                char *location = cmd_token_count > 2 ? commands[j][2] : NULL;
+                handle_history(0, "-r", path_env, location);
+              } else {
+                // history or history <count>
+                int count = 0;
+                if (cmd_token_count > 1) {
+                  count = atoi(commands[j][1]);
+                }
+                handle_history(count, NULL, path_env, NULL);
               }
-              handle_history(count, cmd_token_count > 1 ? commands[j][1] : NULL, path_env, "history.txt");
             }
             exit(0);
           } else if (find_file(commands[j][0], path_env)) {
@@ -409,11 +416,18 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(tokens[0], "cd") == 0) {
       handle_cd(arg_count > 1 ? tokens[1] : "~", home_env);
     } else if (strcmp(tokens[0], "history") == 0) {
-      int count = 0;
-      if (arg_count > 1) {
-        count = atoi(tokens[1]);
+      if (arg_count > 1 && strcmp(tokens[1], "-r") == 0) {
+
+        char *location = arg_count > 2 ? tokens[2] : NULL;
+        handle_history(0, "-r", path_env, location);
+      } else {
+
+        int count = 0;
+        if (arg_count > 1) {
+          count = atoi(tokens[1]);
+        }
+        handle_history(count, NULL, path_env, NULL);
       }
-      handle_history(count, arg_count > 1 ? tokens[1] : NULL, path_env, "history.txt");
     } else if (find_file(tokens[0], path_env)) {
       execute_command(tokens, arg_count);
     } else {
