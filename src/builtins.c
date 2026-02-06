@@ -99,7 +99,7 @@ void handle_history(int count) {
   
 
   int start_index = 0;
-  int end_index = line_number;
+  int end_index = 1;
   
   if (count > 0) {
     start_index = line_number - count;
