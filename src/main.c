@@ -178,6 +178,7 @@ int main(int argc, char *argv[]) {
     char *command = readline("$ ");
     
     if (command == NULL) {
+      remove("history.txt");
       break;
     }
     
@@ -425,5 +426,6 @@ int main(int argc, char *argv[]) {
   }
   free(completion_list);
 
+  remove("history.txt");
   return 0;
 }
