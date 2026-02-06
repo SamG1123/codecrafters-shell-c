@@ -9,6 +9,8 @@
 
 const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "history"};
 
+const char *buffer[MAX_HISTORY];
+
 int is_builtin(const char *command) {
   for (int i = 0; i < NUM_BUILTINS; i++) {
     if (strcmp(command, builtin_commands[i]) == 0) {
@@ -90,11 +92,15 @@ void handle_history(int count) {
   int line_number = 1;
   
   while (fgets(line, sizeof(line), history_file) != NULL) {
-    if (count > 0 && line_number > count) {
-      break;
-    }
     line[strcspn(line, "\n")] = 0;
-    printf("%5d  %s\n", line_number++, line);
+    buffer[line_number - 1] = strdup(line);
+    line_number++;
+  }
+  int len_buffer = len(buffer);
+  for (int i = len_buffer - count; i < len_buffer; i++) {
+    if (i >= 0) {
+      printf("%d %s\n", i + 1, buffer[i]);
+    }
   }
   
   fclose(history_file);
