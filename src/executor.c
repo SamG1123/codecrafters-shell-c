@@ -15,6 +15,10 @@
 #include "executor.h"
 #include "shell.h"
 
+
+extern int HISTORY_COUNT;
+extern char history[MAX_HISTORY][MAX_COMMAND_LEN];
+
 typedef enum {
     STATE_NORMAL,
     STATE_IN_SINGLE_QUOTE,
@@ -274,5 +278,8 @@ char **arg_processor(char *arg, int *argc){
 }
 
 
-
-
+display_history() {
+  for(int i = 0; i < HISTORY_COUNT && i < MAX_HISTORY; i++) {
+    printf("%5d  %s\n", i + 1, history[i]);
+  }
+}

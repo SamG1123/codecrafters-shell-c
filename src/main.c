@@ -23,6 +23,9 @@ char **completion_list = NULL;
 int completion_count = 0;
 char *current_path_env = NULL;
 
+static char history[MAX_HISTORY][MAX_COMMAND_LEN];
+static int history_count = 0;
+
 int redirect_fd(int fd, const char *filename, const char *file_mode) {
   int saved = -1;
   FILE *file = fopen(filename, file_mode);
@@ -325,14 +328,19 @@ int main(int argc, char *argv[]) {
           if (is_builtin_cmd(commands[j][0])) {
             if (strcmp(commands[j][0], "echo") == 0) {
               handle_echo(commands[j], cmd_token_count);
+              handle_history(commands[j][1]);
             } else if (strcmp(commands[j][0], "type") == 0) {
               handle_type(commands[j], cmd_token_count, path_env);
+              handle_history(commands[j][1]);
             } else if (strcmp(commands[j][0], "pwd") == 0) {
               handle_pwd();
+              handle_history(commands[j][1]);
             } else if (strcmp(commands[j][0], "cd") == 0) {
               handle_cd(cmd_token_count > 1 ? commands[j][1] : "~", home_env);
+              handle_history(commands[j][1]);
             } else if (strcmp(commands[j][0], "history") == 0) {
-              handle_history();
+              handle_history(commands[j][1]);
+              
             }
             exit(0);
           } else if (find_file(commands[j][0], path_env)) {
