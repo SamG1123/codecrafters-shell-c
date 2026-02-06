@@ -278,7 +278,7 @@ char **arg_processor(char *arg, int *argc){
 }
 
 
-display_history() {
+void display_history() {
   for(int i = 0; i < HISTORY_COUNT && i < MAX_HISTORY; i++) {
     printf("%5d  %s\n", i + 1, history[i]);
   }
