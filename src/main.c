@@ -149,18 +149,7 @@ char *autocomplete(const char *text, int state) {
   return NULL;
 }
 
-char *up_arrow_completion(const char *text, int state) {
-  if (!state) {
-    build_completion_list(text);
-    return (completion_count > 0) ? strdup(completion_list[0]) : NULL;
-  }
 
-  if (state < completion_count) {
-    return strdup(completion_list[state]);
-  }
-
-  return NULL;
-}
 
 char **autocomplete_setup(const char *text, int start, int end) {
   rl_attempted_completion_over = 1;
@@ -188,9 +177,9 @@ int main(int argc, char *argv[]) {
   remove("history.txt");
 
   while (1) {
+    using_history();
     rl_attempted_completion_function = autocomplete_setup;
-    rl_attempted_up_completion_function = up_arrow_completion;
-    
+
     int pipe_index[MAX_PIPES];
     int pipe_count = 0;
     char *command = readline("$ ");
