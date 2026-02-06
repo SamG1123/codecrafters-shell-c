@@ -203,6 +203,11 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+    if (strcmp(tokens[0], "history") == 0 && arg_count > 2 && strcmp(tokens[1], "-r") == 0) {
+      strncpy(current_history_file, tokens[2], MAX_PATH_LEN - 1);
+      current_history_file[MAX_PATH_LEN - 1] = '\0';
+    }
+
     // Save command to history
     add_history(command);
     save_command_to_history(command);
