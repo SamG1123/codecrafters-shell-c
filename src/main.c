@@ -195,7 +195,12 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    add_history(command);
+    // Save command to history file
+    FILE *history_file = fopen("history.txt", "a");
+    if (history_file != NULL) {
+      fprintf(history_file, "%s\n", command);
+      fclose(history_file);
+    }
 
     STDOUT_REDIRECT = 0;
     STDERR_REDIRECT = 0;

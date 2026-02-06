@@ -81,11 +81,19 @@ void handle_cd(const char *path, const char *HOME) {
 }
 
 void handle_history(void) {
-  HIST_ENTRY **hist_list = history_list();
-  if (hist_list == NULL) {
+  FILE *history_file = fopen("history.txt", "r");
+  if (history_file == NULL) {
     return;
   }
-  for (int i = 0; hist_list[i] != NULL; i++) {
-    printf("%5d  %s\n", i + 1, hist_list[i]->line);
+  
+  char line[1024];
+  int line_number = 1;
+  
+  while (fgets(line, sizeof(line), history_file) != NULL) {
+    // Remove newline if present
+    line[strcspn(line, "\n")] = 0;
+    printf("%5d  %s\n", line_number++, line);
   }
+  
+  fclose(history_file);
 }
