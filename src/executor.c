@@ -13,6 +13,7 @@
 #endif
 #include "executor.h"
 #include "shell.h"
+#include "builtins.h"
 
 typedef enum {
     STATE_NORMAL,
@@ -277,7 +278,7 @@ void save_command_to_history(const char *command) {
     return;
   }
   
-  FILE *history_file = fopen("history.txt", "a");
+  FILE *history_file = fopen(current_history_file, "a");
   if (history_file != NULL) {
     fprintf(history_file, "%s\n", command);
     fclose(history_file);
