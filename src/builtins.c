@@ -98,7 +98,7 @@ void handle_history(int count) {
   }
   
 
-  int start_index = 0;
+  int start_index = 1;
   if (count > 0) {
     start_index = line_number - count;
     if (start_index < 0) start_index = 0;
