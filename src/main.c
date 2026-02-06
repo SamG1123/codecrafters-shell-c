@@ -170,6 +170,9 @@ int main(int argc, char *argv[]) {
   #endif
 
   setbuf(stdout, NULL);
+  
+  // Clear any existing history from previous runs
+  remove("history.txt");
 
   while (1) {
     rl_attempted_completion_function = autocomplete_setup;
