@@ -90,18 +90,21 @@ void handle_history(int count) {
   char *temp_buffer[MAX_HISTORY];
   int line_number = 0;
   
-  // Read all lines from history file
+
   while (fgets(line, sizeof(line), history_file) != NULL && line_number < MAX_HISTORY) {
     line[strcspn(line, "\n")] = 0;
     temp_buffer[line_number] = strdup(line);
     line_number++;
   }
   
-  // Determine starting index for display
-  int start_index = (count > 0 && count < line_number) ? (line_number - count) : 0;
-  
-  // Display entries
-  for (int i = line_number - count; i < line_number; i++) {
+
+  int start_index = 0;
+  if (count > 0) {
+    start_index = line_number - count;
+    if (start_index < 0) start_index = 0;
+  }
+
+  for (int i = start_index; i < line_number; i++) {
     printf("%5d  %s\n", i + 1, temp_buffer[i]);
   }
   
