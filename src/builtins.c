@@ -80,12 +80,12 @@ void handle_cd(const char *path, const char *HOME) {
     }
 }
 
-void handle_history(const char *command) {
+void handle_history(void) {
   HIST_ENTRY **hist_list = history_list();
   if (hist_list == NULL) {
     return;
   }
   for (int i = 0; hist_list[i] != NULL; i++) {
-    printf("%d  %s\n", i + 1, hist_list[i]->line);
+    printf("%5d  %s\n", i + 1, hist_list[i]->line);
   }
 }
