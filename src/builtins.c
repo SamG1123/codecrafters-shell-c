@@ -161,38 +161,25 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
 
 
   else if (arg != NULL && strcmp(arg, "-a") == 0 && history_file != NULL) {
-    char *content_buffer[MAX_HISTORY];
-    int existing_lines = 0;
+    HIST_ENTRY **entries = history_list();
+    int total = history_length;
     FILE *file = NULL;
 
-    file = fopen(current_history_file, "r");
-    if (file != NULL){
-      char line[1024];
-      while (fgets(line, sizeof(line), file) != NULL && existing_lines < MAX_HISTORY){
-        line[strcspn(line, "\n")] = 0;
-        content_buffer[existing_lines] = strdup(line);
-        existing_lines++;
-      }
-      fclose(file);
-    }
-
-    if (existing_lines == 0 || append_checkpoint >= existing_lines) {
+    if (entries == NULL || total <= append_checkpoint) {
       return;
     }
 
     file = fopen(history_file, "a");
     if (file != NULL) {
-      for (int i = append_checkpoint; i < existing_lines; i++) {
-        fprintf(file, "%s\n", content_buffer[i]);
+      for (int i = append_checkpoint; i < total; i++) {
+        if (entries[i] != NULL && entries[i]->line != NULL) {
+          fprintf(file, "%s\n", entries[i]->line);
+        }
       }
       fclose(file);
     }
 
-    for (int i = 0; i < existing_lines; i++) {
-      free(content_buffer[i]);
-    }
-
-    append_checkpoint = existing_lines;
+    append_checkpoint = total;
     return;
   }
   
