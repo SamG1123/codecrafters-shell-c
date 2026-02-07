@@ -185,6 +185,10 @@ int main(int argc, char *argv[]) {
   }
 
   setbuf(stdout, NULL);
+
+  using_history();
+  read_history(current_history_file);
+  reset_append_checkpoint();
   
   // Clear any existing history from previous runs only for the default file
   if (using_default_history_file) {
@@ -220,7 +224,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    if (!(strcmp(tokens[0], "history") == 0 && arg_count > 2 && strcmp(tokens[1], "-r") == 0)) {
+    if (strcmp(tokens[0], "history") != 0) {
       add_history(command);
       save_command_to_history(command);
     }
