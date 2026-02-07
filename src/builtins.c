@@ -142,10 +142,12 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
       if (existing_lines > 0) {
         fprintf(file, "history -w %s\n", history_file);
       }
-      for (int i = 0; i < existing_lines; i++) {
-        fprintf(file, "%s\n", content_buffer[i]);
+      else {
+        for (int i = 0; i < existing_lines; i++) {
+          fprintf(file, "%s\n", content_buffer[i]);
+        }
+        fprintf(file, "history -w %s\n", history_file);
       }
-      fprintf(file, "history -w %s\n", history_file);
       fclose(file);
     }
 
