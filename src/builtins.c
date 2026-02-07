@@ -10,6 +10,7 @@ extern int APPEND_CHECKPOINT;
 
 const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "history"};
 char current_history_file[MAX_PATH_LEN] = "history.txt";
+static int append_checkpoint = 0;
 
 int is_builtin(const char *command) {
   for (int i = 0; i < NUM_BUILTINS; i++) {
@@ -126,10 +127,10 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
   else if (arg != NULL && strcmp(arg, "-w") == 0 && history_file != NULL) {
     char *content_buffer[MAX_HISTORY];
     int existing_lines = 0;
+    FILE *file = NULL;
 
     if (strcmp(history_file, current_history_file) != 0) {
-
-    FILE *file = fopen(current_history_file, "r");
+      file = fopen(current_history_file, "r");
       if (file != NULL) {
         char line[1024];
         while (fgets(line, sizeof(line), file) != NULL && existing_lines < MAX_HISTORY) {
@@ -141,14 +142,13 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
       }
     }
 
-    FILE *file = fopen(history_file, "w");
+    file = fopen(history_file, "w");
     if (file != NULL) {
         for (int i = 0; i < existing_lines; i++) {
           fprintf(file, "%s\n", content_buffer[i]);
         }
+        fclose(file);
       }
-      fclose(file);
-    
 
     for (int i = 0; i < existing_lines; i++) {
       free(content_buffer[i]);
@@ -164,9 +164,10 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
 
   else if (arg != NULL && strcmp(arg, "-a") == 0 && history_file != NULL) {
     char *content_buffer[MAX_HISTORY];
-    int existing_lines = APPEND_CHECKPOINT;
+    int existing_lines = 0;
+    FILE *file = NULL;
 
-    FILE *file = fopen(current_history_file, "r");
+    file = fopen(current_history_file, "r");
     if (file != NULL){
       char line[1024];
       while (fgets(line, sizeof(line), file) != NULL && existing_lines < MAX_HISTORY){
@@ -177,14 +178,23 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
       fclose(file);
     }
 
+    if (existing_lines == 0 || append_checkpoint >= existing_lines) {
+      return;
+    }
+
     file = fopen(history_file, "a");
     if (file != NULL) {
-      for (int i = existing_lines; i < MAX_HISTORY; i++) {
+      for (int i = append_checkpoint; i < existing_lines; i++) {
         fprintf(file, "%s\n", content_buffer[i]);
       }
       fclose(file);
     }
-    APPEND_CHECKPOINT += (existing_lines - APPEND_CHECKPOINT);
+
+    for (int i = 0; i < existing_lines; i++) {
+      free(content_buffer[i]);
+    }
+
+    append_checkpoint = existing_lines;
     return;
   }
   
