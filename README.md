@@ -8,6 +8,10 @@ interpreting shell commands, running external programs and builtin commands like
 cd, pwd, echo and more. Along the way, you'll learn about shell command parsing,
 REPLs, builtin commands, and more.
 
+I took on this challenge to try out something new and get out of my comfort zone, although the project is not complete but you can still try it out, I'd recommend using it on linux as many of the features have been implemented completely well for linux but because of windows issues there might be a few bugs when running on windows.
+
+It works pretty well for basic shell commands so feel free to try it on any system.
+
 **Note**: Head over to
 [codecrafters.io](https://codecrafters.io) to try the challenge.
 
