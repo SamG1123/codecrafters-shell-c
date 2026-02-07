@@ -123,38 +123,22 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
   }
 
   else if (arg != NULL && strcmp(arg, "-w") == 0 && history_file != NULL) {
-    char *content_buffer[MAX_HISTORY];
-    int existing_lines = 0;
-    FILE *file = NULL;
+    HIST_ENTRY **entries = history_list();
+    int total = history_length;
+    FILE *file = fopen(history_file, "w");
 
-    if (strcmp(history_file, current_history_file) != 0) {
-      file = fopen(current_history_file, "r");
-      if (file != NULL) {
-        char line[1024];
-        while (fgets(line, sizeof(line), file) != NULL && existing_lines < MAX_HISTORY) {
-          line[strcspn(line, "\n")] = 0;
-          content_buffer[existing_lines] = strdup(line);
-          existing_lines++;
-        }
-        fclose(file);
-      }
-    }
-
-    file = fopen(history_file, "w");
     if (file != NULL) {
-        for (int i = 0; i < existing_lines; i++) {
-          fprintf(file, "%s\n", content_buffer[i]);
+      for (int i = 0; i < total; i++) {
+        if (entries != NULL && entries[i] != NULL && entries[i]->line != NULL) {
+          fprintf(file, "%s\n", entries[i]->line);
         }
-        fclose(file);
       }
-
-    for (int i = 0; i < existing_lines; i++) {
-      free(content_buffer[i]);
+      fclose(file);
     }
-    existing_lines = 0;
 
     strncpy(current_history_file, history_file, MAX_PATH_LEN - 1);
     current_history_file[MAX_PATH_LEN - 1] = '\0';
+    append_checkpoint = total;
     return;
 
   }
