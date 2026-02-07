@@ -425,9 +425,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (strcmp(tokens[0], "exit") == 0) {
-      if (using_default_history_file) {
-        remove(current_history_file);
-      }
+      
       break;
     } else if (strcmp(tokens[0], "echo") == 0) {
       handle_echo(tokens, redirect_index == -1 ? arg_count : redirect_index);
