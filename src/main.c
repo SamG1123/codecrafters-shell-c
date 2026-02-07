@@ -424,6 +424,9 @@ int main(int argc, char *argv[]) {
       } else if (arg_count > 1 && strcmp(tokens[1], "-w") == 0) {
         char *location = arg_count > 2 ? tokens[2] : NULL;
         handle_history(0, "-w", path_env, location);
+      } else if (arg_count > 1 && strcmp(tokens[1], "-a") == 0) {
+        char *location = arg_count > 2 ? tokens[2] : NULL;
+        handle_history(0, "-a", path_env, location);
       } else {
 
         int count = 0;
