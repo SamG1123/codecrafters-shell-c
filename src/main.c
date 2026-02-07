@@ -224,10 +224,8 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    if (strcmp(tokens[0], "history") != 0) {
-      add_history(command);
-      save_command_to_history(command);
-    }
+    add_history(command);
+    save_command_to_history(command);
 
     STDOUT_REDIRECT = 0;
     STDERR_REDIRECT = 0;
