@@ -173,8 +173,8 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
         content_buffer[existing_lines] = strdup(line);
         existing_lines++;
       }
+      fclose(file);
     }
-    fclose(file);
 
     FILE *file = fopen(history_file, "a");
     if (file != NULL) {
