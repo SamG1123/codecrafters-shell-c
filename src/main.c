@@ -165,6 +165,7 @@ int main(int argc, char *argv[]) {
   current_path_env = path_env;
   const char *home_env;
   const char *hist_env;
+  bool using_default_history_file = false;
   
   #ifdef _WIN32
   home_env = getenv("USERPROFILE");
@@ -179,12 +180,15 @@ int main(int argc, char *argv[]) {
   } else {
     strncpy(current_history_file, "history.txt", MAX_PATH_LEN - 1);
     current_history_file[MAX_PATH_LEN - 1] = '\0';
+    using_default_history_file = true;
   }
 
   setbuf(stdout, NULL);
   
-  // Clear any existing history from previous runs
-  remove(current_history_file);
+  // Clear any existing history from previous runs only for the default file
+  if (using_default_history_file) {
+    remove(current_history_file);
+  }
 
   while (1) {
     using_history();
@@ -195,7 +199,9 @@ int main(int argc, char *argv[]) {
     char *command = readline("$ ");
     
     if (command == NULL) {
-      remove(current_history_file);
+      if (using_default_history_file) {
+        remove(current_history_file);
+      }
       break;
     }
     
@@ -416,7 +422,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (strcmp(tokens[0], "exit") == 0) {
-      remove("history.txt");
+      remove(current_history_file);
       break;
     } else if (strcmp(tokens[0], "echo") == 0) {
       handle_echo(tokens, redirect_index == -1 ? arg_count : redirect_index);
@@ -428,7 +434,6 @@ int main(int argc, char *argv[]) {
       handle_cd(arg_count > 1 ? tokens[1] : "~", home_env);
     } else if (strcmp(tokens[0], "history") == 0) {
       if (arg_count > 1 && strcmp(tokens[1], "-r") == 0) {
-
         char *location = arg_count > 2 ? tokens[2] : NULL;
         handle_history(0, "-r", path_env, location);
       } else if (arg_count > 1 && strcmp(tokens[1], "-w") == 0) {
@@ -465,6 +470,6 @@ int main(int argc, char *argv[]) {
   }
   free(completion_list);
 
-  remove("history.txt");
+  remove(current_history_file);
   return 0;
 }
