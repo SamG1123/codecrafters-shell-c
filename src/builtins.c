@@ -126,18 +126,21 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
     char *content_buffer[MAX_HISTORY];
     int existing_lines = 0;
 
+    if (strcmp(history_file, current_history_file) != 0) {
+
     FILE *file = fopen("history.txt", "r");
-    if (file != NULL) {
-      char line[1024];
-      while (fgets(line, sizeof(line), file) != NULL && existing_lines < MAX_HISTORY) {
-        line[strcspn(line, "\n")] = 0;
-        content_buffer[existing_lines] = strdup(line);
-        existing_lines++;
+      if (file != NULL) {
+        char line[1024];
+        while (fgets(line, sizeof(line), file) != NULL && existing_lines < MAX_HISTORY) {
+          line[strcspn(line, "\n")] = 0;
+          content_buffer[existing_lines] = strdup(line);
+          existing_lines++;
+        }
+        fclose(file);
       }
-      fclose(file);
     }
 
-    file = fopen(history_file, "a");
+    FILE *file = fopen(history_file, "a");
     if (file != NULL) {
       if (sizeof(content_buffer) < 1) {
         fprintf(file, "history -w %s\n", history_file);
