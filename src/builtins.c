@@ -176,7 +176,7 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
       fclose(file);
     }
 
-    FILE *file = fopen(history_file, "a");
+    file = fopen(history_file, "a");
     if (file != NULL) {
       for (int i = existing_lines; i < MAX_HISTORY && content_buffer[i] != NULL; i++) {
         fprintf(file, "%s\n", content_buffer[i]);
