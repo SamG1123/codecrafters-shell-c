@@ -159,12 +159,12 @@ char **autocomplete_setup(const char *text, int start, int end) {
 
 
 int main(int argc, char *argv[]) {
-  int APPEND_CHECKPOINT = 0;
   char command[MAX_COMMAND_LEN];
   char input[MAX_COMMAND_LEN];
   char *path_env = getenv("PATH");
   current_path_env = path_env;
   const char *home_env;
+  const char *hist_env;
   
   #ifdef _WIN32
   home_env = getenv("USERPROFILE");
@@ -172,10 +172,19 @@ int main(int argc, char *argv[]) {
   home_env = getenv("HOME");
   #endif
 
+  hist_env = getenv("HISTFILE");
+  if (hist_env != NULL && hist_env[0] != '\0') {
+    strncpy(current_history_file, hist_env, MAX_PATH_LEN - 1);
+    current_history_file[MAX_PATH_LEN - 1] = '\0';
+  } else {
+    strncpy(current_history_file, "history.txt", MAX_PATH_LEN - 1);
+    current_history_file[MAX_PATH_LEN - 1] = '\0';
+  }
+
   setbuf(stdout, NULL);
   
   // Clear any existing history from previous runs
-  remove("history.txt");
+  remove(current_history_file);
 
   while (1) {
     using_history();
@@ -186,7 +195,7 @@ int main(int argc, char *argv[]) {
     char *command = readline("$ ");
     
     if (command == NULL) {
-      remove("history.txt");
+      remove(current_history_file);
       break;
     }
     

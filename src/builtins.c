@@ -6,8 +6,6 @@
 #include <readline/history.h>
 #include "builtins.h"
 #include "shell.h"
-extern int APPEND_CHECKPOINT;
-
 const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "history"};
 char current_history_file[MAX_PATH_LEN] = "history.txt";
 static int append_checkpoint = 0;
