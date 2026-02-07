@@ -139,7 +139,7 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
 
     file = fopen(history_file, "a");
     if (file != NULL) {
-      if (existing_lines > 0) {
+      if (sizeof(content_buffer) < 1) {
         fprintf(file, "history -w %s\n", history_file);
       }
       else {
