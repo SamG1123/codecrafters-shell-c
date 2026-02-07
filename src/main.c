@@ -204,9 +204,6 @@ int main(int argc, char *argv[]) {
     char *command = readline("$ ");
     
     if (command == NULL) {
-      if (using_default_history_file) {
-        remove(current_history_file);
-      }
       break;
     }
     
@@ -425,7 +422,6 @@ int main(int argc, char *argv[]) {
     }
 
     if (strcmp(tokens[0], "exit") == 0) {
-      
       break;
     } else if (strcmp(tokens[0], "echo") == 0) {
       handle_echo(tokens, redirect_index == -1 ? arg_count : redirect_index);
@@ -473,6 +469,5 @@ int main(int argc, char *argv[]) {
   }
   free(completion_list);
 
-  remove(current_history_file);
   return 0;
 }
