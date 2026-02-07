@@ -159,6 +159,7 @@ char **autocomplete_setup(const char *text, int start, int end) {
 
 
 int main(int argc, char *argv[]) {
+  int APPEND_CHECKPOINT = 0;
   char command[MAX_COMMAND_LEN];
   char input[MAX_COMMAND_LEN];
   char *path_env = getenv("PATH");

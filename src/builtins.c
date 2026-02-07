@@ -6,6 +6,7 @@
 #include <readline/history.h>
 #include "builtins.h"
 #include "shell.h"
+extern int APPEND_CHECKPOINT;
 
 const char *builtin_commands[] = {"exit", "echo", "type", "pwd", "cd", "history"};
 char current_history_file[MAX_PATH_LEN] = "history.txt";
@@ -178,11 +179,12 @@ void handle_history(int count, char *arg, char *path_env, char *history_file) {
 
     file = fopen(history_file, "a");
     if (file != NULL) {
-      for (int i = existing_lines; i < MAX_HISTORY && content_buffer[i] != NULL; i++) {
+      for (int i = existing_lines; i < MAX_HISTORY; i++) {
         fprintf(file, "%s\n", content_buffer[i]);
       }
       fclose(file);
     }
+    APPEND_CHECKPOINT += (existing_lines - APPEND_CHECKPOINT);
     return;
   }
   
